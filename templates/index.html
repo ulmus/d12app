@@ -1,0 +1,123 @@
+{% load verbatim %}
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>d12app</title>
+	<link rel="stylesheet" type="text/css" href="/static/lib/backbone-forms/src/backbone-forms.css">
+	<link rel="stylesheet" type="text/css" href="/static/lib/bootstrap/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/static/lib/fonts/websymbols/stylesheet.css">
+	<link rel="stylesheet" type="text/css" href="/static/d12/css/style.css">
+	<link rel="stylesheet" type="text/css" href="/static/d12/css/style-print.css" media="print">
+	<script src="/static/lib/js/jquery-1.7.1.min.js"></script>
+	<script src="/static/lib/js/underscore-min.js"></script>
+	<script src="/static/lib/js/moment.min.js"></script>
+	<script src="/static/lib/js/backbone.js"></script>
+	<script src="/static/lib/backbone-forms/src/backbone-forms.js"></script>
+	<script src="/static/lib/js/handlebars.js"></script>
+	<script src="/static/lib/js/Markdown.Converter.js"></script>
+	<script src="/static/lib/js/Markdown.Sanitizer.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap-alerts.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap-buttons.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap-dropdown.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap-modal.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap-twipsy.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap-popover.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap-tabs.js"></script>
+
+	<!-- Templates -->
+	{% verbatim %}
+	<script id="tmplCardContent" type="text/x-template">
+	<div class="card">
+		<div class="websymbol clickable noprint showDelete">&#39;</div>
+		<div class="contents {{cardActionClassName model.type}}">
+			<h2 class="title">
+				<div data-attribute-editclick="title" class="clickable">
+					{{#if model.title}}{{model.title}}{{else}}<span class="placeholder noprint">Click to add title</span>{{/if}}
+				</div>
+				<input type="text" class="edit noprint" data-attribute-edit="title"/>
+			</h2>
+			<div class="cardtext">
+				<div class="description">
+					<div class="clickable" data-attribute-editclick="description">
+						{{#if model.description}}<p>{{model.description}}<p>{{else}}<p class="noprint placeholder">Click to add description...</p>{{/if}}
+					</div>
+					<input type="text" class="edit noprint" data-attribute-edit="description"/>
+				</div>
+				<div class="body">
+					<div class="clickable" data-attribute-editclick="body">
+					{{#if model.body}}{{{markdown model.body}}}{{else}}<p class="noprint placeholder">Click to add card text...</p>{{/if}}
+					</div>
+					<textarea class="edit noprint" data-attribute-edit="body"></textarea>
+				</div>
+			</div>
+			<ul class="icons left">
+				<li class="action-type clickable">{{cardActionDisplay model.type}}</li>
+			</ul>
+			<ul class="icons right">
+				<li data-bind class="phase{{#if model.phase_1 }} enabled{{/if}} phase_1 clickable">1</li>
+				<li class="phase{{#if model.phase_2 }} enabled{{/if}} phase_2 clickable">2</li>
+				<li class="phase{{#if model.phase_3 }} enabled{{/if}} phase_3 clickable">3</li>
+			</ul>
+		</div>
+	</div>
+	</script>
+		
+	<script id="tmplCardListContent" type="text/x-template">
+	{{#each model}}
+	<li><a href="#card/{{this.id}}/">{{this.title}}</a></li>
+	{{/each}}
+	</script>
+	{% endverbatim %}
+
+	<!-- Initiate -->
+	<script src="/static/d12/js/min/foundation.js"></script>
+	<script src="/static/d12/js/min/cards.js"></script>
+</head>
+<body>
+	{% csrf_token %}
+	<div class="topbar noprint">
+      <div class="topbar-inner">
+        <div class="container">
+          <a class="brand" href="#">d12app</a>
+          <ul class="nav">
+            <li class=""><a id="cards-addCard" href="#"><span class="websymbol">+</span> Add card</a></li>
+            <li class=""><a id="cards-refreshCards" href="#"><span class="websymbol">V</span> Refresh</a></li>
+          </ul>
+          <ul class="secondary-nav">
+			{% if user.is_staff %}
+            <li class=""><a id="cards-admin" href="/admin/"><span class="websymbol">S</span> Admin</a></li>
+			{% endif %}
+            <li class=""><a id="cards-logout" href="/logout/"><span class="websymbol">X</span> Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+	<div class="container">
+		<div class="row">
+			<div class="span14 offset1 messages">
+			</div>
+		</div>
+		<div class="row">
+			<div class="span14 offset1">
+				<div id="cardSheetView" class="card-sheet">
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- modals -->
+	<div class="deleteModal modal hide fade" style="display: none; ">
+        <div class="modal-header">
+          <a href="#" class="close">×</a>
+          <h3>Warning!</h3>
+        </div>
+        <div class="modal-body">
+          <p>Do you wan&#39;t to delete the card <em class="cardTitle"></em>? This action can&#39;t be undone!</p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn danger do">Delete <em class="cardTitle"></em></a>
+          <a href="#" class="btn secondary cancel">Cancel</a>
+        </div>
+    </div>
+</body>
+</html>

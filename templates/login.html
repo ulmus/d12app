@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load url from future %}
+
+{% block content %}
+	<div class="topbar">
+      <div class="topbar-inner">
+        <div class="container">
+          <a class="brand" href="#">d12app</a>
+        </div>
+      </div>
+    </div>
+
+<div class="container login">
+		<div class="row">
+			<div class="span14 offset1 messages">
+				{% if form.errors %}
+					<div class="alert-message warning">Your username and password didn't match. Please try again.</div>
+				{% endif %}
+			</div>
+		</div>	<div class="row">
+		<div class="span10 offset3">
+			<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+			{% csrf_token %}
+				<fieldset>
+					<legend>d12app login</legend>
+					<div class="clearfix">
+					    {{ form.username.label_tag }}
+					    <div class="input">{{ form.username }}</div>
+					</div>
+					<div class="clearfix">
+					    {{ form.password.label_tag }}
+					    <div class="input">{{ form.password }}</div>
+					</div>
+				</fieldset>
+			<div class="actions">
+			<input type="submit" class="btn primary right" value="login" />
+			</div>
+			<input type="hidden" name="next" value="{{ next }}" />
+			</form>
+		</div>
+	</div>
+</div>
+
+	<script>
+		$(document).ready(function(){
+			$("#id_username").focus();
+		});
+	</script>
+
+{% endblock %}

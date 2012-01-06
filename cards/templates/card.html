@@ -1,0 +1,25 @@
+
+	<div class="card">
+		<div class="contents attack">
+			<h2>{{card.title}}</h2>
+			<div class="cardtext">
+				{% if card.description %}<p>{{card.description}}</p>{% endif %}
+				<ul class="text-list">
+					{% for item in card.body %}
+					<li>
+						<div class="label">{{ item.label }}:</div>
+						<div class="text">{{ item.text }}</div>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+			<ul class="icons left">
+				<li class="action-type">{{ card.get_type_display }}</li>
+			</ul>
+			<ul class="icons right">
+				<li class="phase{% if card.phase_1 %} enabled{% endif %}">1</li>
+				<li class="phase{% if card.phase_2 %} enabled{% endif %}">2</li>
+				<li class="phase{% if card.phase_3 %} enabled{% endif %}">3</li>
+			</ul>
+		</div>
+	</div>
