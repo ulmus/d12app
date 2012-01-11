@@ -1,0 +1,300 @@
+/*@import url(http://fonts.googleapis.com/css?family=Expletus+Sans:400,700,400italic,700italic);*/
+
+body {
+	padding-top: 80px;
+}
+
+.messages {
+	height: 50px;
+}
+
+.clickable {
+	cursor: pointer;
+}
+
+.websymbol {
+	font-family: 'WebSymbolsRegular';
+}
+
+.placeholder {
+	color: grey;
+	font-style: italic;	
+}
+
+div.card-sheet {
+	position: relative;
+}
+
+div.card {
+	/*font-family: 'Expletus Sans', sans-serif;*/
+	font-size: 12pt;
+	height: 88mm;
+	width: 63mm;
+	position: relative;
+	float:left;
+	page-break-inside: avoid;
+}
+
+div.card .flipClick {
+	position: absolute;
+	top: -1.5mm;
+	left: -1.5mm;
+	color: #333;
+	width: 6mm;
+	height: 6mm;
+	border: 2px solid #333;
+	border-radius: 5mm;
+	text-align: center;
+	font-size: 18px;
+	line-height: 24px;
+	background-color: white;
+	box-shadow: 2px 2px 5px black;
+}
+
+.ui-draggable-dragging {
+	opacity: 0.6;
+	-webkit-transform: scale(.5) rotate(5deg);
+	-moz-transform: scale(.5);
+	-ms-transform: scale(.5);
+	transform: scale(.5);
+}
+
+div.card .contents {
+	position: absolute;
+	margin: 2mm 2mm 2mm;
+	height: 84mm;
+	width: 59mm;
+	border-radius: 3mm;
+	border: 0.75mm solid black;
+	box-shadow:	2px 2px 5px #333;
+	-webkit-transition: all .15s ease-out;
+	-moz-transition: all .15s ease-out;
+	-ms-transition: all .15s ease-out;
+	transition: all .15s ease-out;
+	background-color: white;
+}
+
+div.card.display .hide {
+	-webkit-transform: opacity(0.0);
+}
+
+div.card.edit .contents {
+	height: 126mm;
+	width: 88.5mm;
+	top: -22mm;
+	left: -16mm;
+	padding: 3mm;
+	-webkit-transform: scale(.65);
+	-moz-transform: scale(.65);
+	-ms-transform: scale(.65);
+	transform: scale(.65);
+}
+
+div.card.edit.show .contents {
+	z-index: 1000;
+}
+div.card.edit.scale .contents {
+	-webkit-transform: scale(1.0);
+	-moz-transform: scale(1.0);
+	-ms-transform: scale(1.0);
+	transform: scale(1.0);
+}
+
+div.card.edit label {
+	width: 100px;
+}
+
+div.card.edit .input {
+	margin-left: 110px;
+}
+
+
+div.card.edit .toolbar {
+	position: absolute;
+	bottom: 10px
+}
+
+div.card.display:hover .contents {
+	box-shadow:	0px 0px 6px #933;
+}
+
+div.card .contents.action {
+	background-color: rgb(199,4,4);
+	background-image: linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
+	background-image: -o-linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
+	background-image: -moz-linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
+	background-image: -webkit-linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
+	background-image: -ms-linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
+}
+
+div.card .contents.move {
+	background-color: rgb(8,110,199);
+	background-image: linear-gradient(bottom, rgb(0,52,115) 9%, rgb(8,110,199) 41%);
+	background-image: -o-linear-gradient(bottom, rgb(0,52,115) 9%, rgb(8,110,199) 41%);
+	background-image: -moz-linear-gradient(bottom, rgb(0,52,115) 9%, rgb(8,110,199) 41%);
+	background-image: -webkit-linear-gradient(bottom, rgb(0,52,115) 9%, rgb(8,110,199) 41%);
+	background-image: -ms-linear-gradient(bottom, rgb(0,52,115) 9%, rgb(8,110,199) 41%);
+}
+
+div.card .contents.support {
+	background-color: rgb(6,199,6);
+	background-image: linear-gradient(bottom, rgb(6,115,0) 9%, rgb(6,199,6) 41%);
+	background-image: -o-linear-gradient(bottom, rgb(6,115,0) 9%, rgb(6,199,6) 41%);
+	background-image: -moz-linear-gradient(bottom, rgb(6,115,0) 9%, rgb(6,199,6) 41%);
+	background-image: -webkit-linear-gradient(bottom, rgb(6,115,0) 9%, rgb(6,199,6) 41%);
+	background-image: -ms-linear-gradient(bottom, rgb(6,115,0) 9%, rgb(6,199,6) 41%);
+}
+
+
+div.card .contents.reaction {
+	background-color: rgb(199,199,10);
+	background-image: linear-gradient(bottom, rgb(115,115,0) 9%, rgb(199,199,10) 41%);
+	background-image: -o-linear-gradient(bottom, rgb(115,115,0) 9%, rgb(199,199,10) 41%);
+	background-image: -moz-linear-gradient(bottom, rgb(115,115,0) 9%, rgb(199,199,10) 41%);
+	background-image: -webkit-linear-gradient(bottom, rgb(115,115,0) 9%, rgb(199,199,10) 41%);
+	background-image: -ms-linear-gradient(bottom, rgb(115,115,0) 9%, rgb(199,199,10) 41%);
+}
+
+div.card .contents h2 {
+	position: absolute;
+	top: 0.7mm;
+	left: 4.5mm;
+	width: 50mm;
+	height: 8mm;
+	display: block;
+	padding: 0mm;
+	margin: 0mm;
+	border-radius:3mm;
+	border: 0.75mm solid black;
+	background-color: whitesmoke;
+	text-align: center;
+	font-size: 12pt;
+	line-height: 8.5mm;
+	background-image: linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -o-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -moz-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -webkit-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -ms-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+
+}
+
+div.card .contents .cardtext {
+	height: 66mm;
+	width: auto;
+	border-radius: 3mm;
+	border: 0.75mm solid black;
+	background-color: white;
+	margin: 3mm 1mm 1mm;
+	padding: 8mm 2mm 4mm;
+}
+
+div.card .contents .cardtext .description {
+	font-style: italic;
+	height: 10mm;
+}
+
+div.card .contents .cardtext .description p {
+	font-style: italic;
+}
+
+div.card .contents .cardtext ul.text-list {
+	list-style: none;
+	font-size: 9pt;
+}
+
+div.card .contents .cardtext ul.text-list li {
+	margin-top: 2mm;
+}
+
+div.card .contents .cardtext .text-list li .label {
+	font-weight: bold;
+	display: inline;
+	margin: 0mm;
+	padding: 0mm;
+}
+
+div.card .contents .cardtext .text-list li .text {
+	display: inline;
+	margin: 0mm;
+	padding: 0mm;
+}
+
+
+div.card .contents ul.icons {
+	bottom: -1.5mm;
+	position: absolute;
+	list-style: none;
+	margin: 1mm;
+	padding: 1mm;
+}
+
+div.card .contents .icons li {
+	float: left;
+	width: 6mm;
+	height: 6mm;
+	text-align: center;
+	line-height: 6.5mm;
+	border-radius: 2.2mm;
+	border: 0.5mm solid black;
+	margin: 1mm;
+	background-color: white;
+	font-weight: bold;
+	font-size: 12pt;
+}
+
+div.card .icons.left {
+	left: 1mm;
+}
+
+div.card .icons.left li.action-type {
+	width: auto;
+	color: #333;
+	font-size: 10pt;
+	font-weight: normal;
+	padding-left: 1.5mm;
+	padding-right: 1.5mm;
+	min-width: 15mm;
+	text-align: center;
+	background-image: linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -o-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -moz-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -webkit-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+	background-image: -ms-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
+}
+
+
+div.card .icons.right {
+	left: 32mm;
+	width: 36mm;
+}
+
+div.card .icons.right li.phase {
+	background-color: #e5e5e5;
+	border-color: #7f7f7f;
+	color: #cbcbcb;
+}
+
+div.card .icons.right li.phase.enabled {
+	background-color: #abe57a;
+	border-color: black;
+	color: black;	
+}
+
+/*
+div.card input, div.card textarea {
+	width: 50mm;
+}
+
+div.card h2 input {
+	width: 40mm
+}
+*/
+
+div.login {
+	margin-top:80px;
+}
+
+/* iPhone [portrait + landscape] */
+@media only screen and (max-device-width: 480px) {
+	.topbar { position: absolute !important; }
+}
