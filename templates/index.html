@@ -48,6 +48,7 @@
 				<li class="action-type">{{cardActionDisplay attr.type}}</li>
 			</ul>
 			<ul class="icons right">
+				{{#if attr.protected }}<li class="noprint"><span class="websymbol">x</span></li>{{/if }}
 			</ul>
 		</div>
 	</div>
@@ -198,10 +199,10 @@
 					</div>
 				</div>
 			</div>
-			<div class="span13 card-sheet">
-				<div id="cardSheetView">
+			<div class="span13">
+				<div id="cardSheetView" class="card-sheet">
 				</div>
-				<div id="allCardsView">
+				<div id="allCardsView" class="card-sheet">
 				</div>
 				&nbsp;
 			</div>

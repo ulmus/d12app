@@ -34,7 +34,6 @@ div.card {
 	page-break-inside: avoid;
 }
 
-
 .ui-draggable-dragging {
 	z-index: 2000;
 	opacity: 0.6;
@@ -195,15 +194,14 @@ div.card .contents .cardtext .description {
 }
 
 div.card .contents ul.icons {
-	bottom: -1.5mm;
-	position: absolute;
+	bottom: 8mm;
+	position: relative;
 	list-style: none;
 	margin: 1mm;
 	padding: 1mm;
 }
 
 div.card .contents .icons li {
-	float: left;
 	width: 6mm;
 	height: 6mm;
 	text-align: center;
@@ -214,15 +212,16 @@ div.card .contents .icons li {
 	background-color: white;
 	font-weight: bold;
 	font-size: 12pt;
+	color: #333;
 }
 
 div.card .icons.left {
+	float: left;
 	left: 1mm;
 }
 
 div.card .icons.left li.action-type {
 	width: auto;
-	color: #333;
 	font-size: 10pt;
 	font-weight: normal;
 	padding-left: 1.5mm;
@@ -238,22 +237,13 @@ div.card .icons.left li.action-type {
 
 
 div.card .icons.right {
-	left: 32mm;
-	width: 36mm;
+	right: 1mm;
+	float: right;
 }
 
-div.card .icons.right li.phase {
-	background-color: #e5e5e5;
-	border-color: #7f7f7f;
-	color: #cbcbcb;
+div.card .contents .icons.right li {
+	float: right;
 }
-
-div.card .icons.right li.phase.enabled {
-	background-color: #abe57a;
-	border-color: black;
-	color: black;	
-}
-
 div.deck {
 	/*font-family: 'Expletus Sans', sans-serif;*/
 	font-size: 12pt;

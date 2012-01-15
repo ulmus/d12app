@@ -573,7 +573,7 @@
       });
       this.trashView.render();
       $("#cards-addCard").click(function() {
-        return _this.cards.create();
+        return _this.allCards.create();
       });
       $("#cards-addDeck").click(function() {
         return _this.decks.create({

@@ -378,7 +378,7 @@ class Cards.D12Router extends Backbone.Router
 
 		# Navigation bar
 		$("#cards-addCard").click(=>
-			@cards.create()
+			@allCards.create()
 		)
 
 		$("#cards-addDeck").click(=>
