@@ -1,5 +1,5 @@
 (function() {
-  var Foundation, init, templateHash,
+  var Foundation, getParams, getUrl, init, methodMap, templateHash, urlError,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
@@ -13,9 +13,9 @@
   Handlebars.registerHelper("cardActionDisplay", function(abbr) {
     switch (abbr) {
       case "ACTN":
-        return "Primary";
+        return "Main";
       case "MOVE":
-        return "Move";
+        return "Positioning";
       case "SPRT":
         return "Support";
       case "REAC":
@@ -38,6 +38,10 @@
 
   Handlebars.registerHelper("markdown", function(markdownText) {
     return Foundation.markdownConverter.makeHtml(markdownText);
+  });
+
+  Handlebars.registerHelper("collectionCount", function(collection) {
+    return collection.length;
   });
 
   templateHash = {};
@@ -69,6 +73,131 @@
 
   Foundation.generateTemplates();
 
+  Foundation.Collection = (function(_super) {
+
+    __extends(Collection, _super);
+
+    function Collection() {
+      this.url = __bind(this.url, this);
+      this.unsetParam = __bind(this.unsetParam, this);
+      this.setParam = __bind(this.setParam, this);
+      this.queryParams = __bind(this.queryParams, this);
+      this.initialize = __bind(this.initialize, this);
+      Collection.__super__.constructor.apply(this, arguments);
+    }
+
+    Collection.prototype.initialize = function(models, options) {
+      options || (options = {});
+      this._params = options.params ? options.params : {};
+      return Collection.__super__.initialize.call(this, models, options);
+    };
+
+    Collection.prototype.queryParams = function() {
+      return this._params;
+    };
+
+    Collection.prototype.setParam = function(key, value) {
+      return this._params[key] = value;
+    };
+
+    Collection.prototype.unsetParam = function(key) {
+      return delete this._params[key];
+    };
+
+    Collection.prototype.url = function() {
+      return this.rootUrl;
+    };
+
+    return Collection;
+
+  })(Backbone.Collection);
+
+  Foundation.Model = (function(_super) {
+
+    __extends(Model, _super);
+
+    function Model() {
+      this.toJSON = __bind(this.toJSON, this);
+      this.toString = __bind(this.toString, this);
+      this.queryParams = __bind(this.queryParams, this);
+      Model.__super__.constructor.apply(this, arguments);
+    }
+
+    Model.prototype._params = {};
+
+    Model.prototype.queryParams = function() {
+      return this._params;
+    };
+
+    Model.prototype.toString = function() {
+      return "model";
+    };
+
+    Model.prototype.toJSON = function() {
+      var attr;
+      attr = _(this.attributes).clone();
+      delete attr.id;
+      return attr;
+    };
+
+    return Model;
+
+  })(Backbone.Model);
+
+  Backbone.Form.editors.MultipleSelect = (function(_super) {
+
+    __extends(MultipleSelect, _super);
+
+    function MultipleSelect() {
+      this.renderOptions = __bind(this.renderOptions, this);
+      MultipleSelect.__super__.constructor.apply(this, arguments);
+    }
+
+    MultipleSelect.prototype.renderOptions = function(options) {
+      MultipleSelect.__super__.renderOptions.call(this, options);
+      return $(this.el).attr("multiple", "multiple");
+    };
+
+    return MultipleSelect;
+
+  })(Backbone.Form.editors.Select);
+
+  Backbone.Form.editors.ChosenMultipleSelect = (function(_super) {
+
+    __extends(ChosenMultipleSelect, _super);
+
+    function ChosenMultipleSelect() {
+      this.renderOptions = __bind(this.renderOptions, this);
+      ChosenMultipleSelect.__super__.constructor.apply(this, arguments);
+    }
+
+    ChosenMultipleSelect.prototype.renderOptions = function(options) {
+      ChosenMultipleSelect.__super__.renderOptions.call(this, options);
+      return $(this.el).addClass("chosen-select");
+    };
+
+    return ChosenMultipleSelect;
+
+  })(Backbone.Form.editors.MultipleSelect);
+
+  Backbone.Form.editors.ChosenSelect = (function(_super) {
+
+    __extends(ChosenSelect, _super);
+
+    function ChosenSelect() {
+      this.renderOptions = __bind(this.renderOptions, this);
+      ChosenSelect.__super__.constructor.apply(this, arguments);
+    }
+
+    ChosenSelect.prototype.renderOptions = function(options) {
+      ChosenSelect.__super__.renderOptions.call(this, options);
+      return $(this.el).addClass("chosen-select");
+    };
+
+    return ChosenSelect;
+
+  })(Backbone.Form.editors.Select);
+
   Foundation.TemplateView = (function(_super) {
 
     __extends(TemplateView, _super);
@@ -78,8 +207,7 @@
       this.unbindModel = __bind(this.unbindModel, this);
       this.bindModel = __bind(this.bindModel, this);
       this.setModel = __bind(this.setModel, this);
-      this.postRender = __bind(this.postRender, this);
-      this.preRender = __bind(this.preRender, this);
+      this.getContext = __bind(this.getContext, this);
       this.render = __bind(this.render, this);
       this.initialize = __bind(this.initialize, this);
       TemplateView.__super__.constructor.apply(this, arguments);
@@ -93,20 +221,19 @@
     };
 
     TemplateView.prototype.render = function() {
-      this.preRender();
       if (this.model && this.constructor.template) {
-        $(this.el).html(this.constructor.template({
-          model: this.model.toJSON()
-        }));
+        $(this.el).html(this.constructor.template(this.getContext()));
       }
       this.delegateEvents();
-      TemplateView.__super__.render.apply(this, arguments);
-      return this.postRender();
+      return TemplateView.__super__.render.call(this);
     };
 
-    TemplateView.prototype.preRender = function() {};
-
-    TemplateView.prototype.postRender = function() {};
+    TemplateView.prototype.getContext = function() {
+      return {
+        model: this.model,
+        attr: this.model.toJSON()
+      };
+    };
 
     TemplateView.prototype.setModel = function(newModel) {
       this.unbindModel(this.model);
@@ -148,71 +275,93 @@
     __extends(EditableTemplateView, _super);
 
     function EditableTemplateView() {
-      this.onShowClickable = __bind(this.onShowClickable, this);
-      this.onShowEdit = __bind(this.onShowEdit, this);
-      this.attributeEditKeypress = __bind(this.attributeEditKeypress, this);
-      this.attributeEditDone = __bind(this.attributeEditDone, this);
-      this.attributeEditDoneClick = __bind(this.attributeEditDoneClick, this);
-      this.attributeEditStart = __bind(this.attributeEditStart, this);
-      this.attributeEditStartClick = __bind(this.attributeEditStartClick, this);
-      this.initialize = __bind(this.initialize, this);
+      this.afterAdd = __bind(this.afterAdd, this);
+      this.editKeyUp = __bind(this.editKeyUp, this);
+      this.commitEdit = __bind(this.commitEdit, this);
+      this.showDisplay = __bind(this.showDisplay, this);
+      this.showEdit = __bind(this.showEdit, this);
+      this.render = __bind(this.render, this);
+      this.delegateEvents = __bind(this.delegateEvents, this);
       EditableTemplateView.__super__.constructor.apply(this, arguments);
     }
 
-    EditableTemplateView.prototype.autoSave = false;
+    EditableTemplateView.modelName = "object";
 
-    EditableTemplateView.prototype.initialize = function() {
-      this.events["click [data-attribute-editclick]"] = "attributeEditStartClick";
-      this.events["blur [data-attribute-edit]"] = "attributeEditDoneClick";
-      this.events["keypress input[type='text'][data-attribute-edit]"] = "attributeEditKeypress";
-      this.delegateEvents();
-      _(this.autoSave).defaults({
-        autoSave: this.options.autoSave
+    EditableTemplateView.prototype.delegateEvents = function() {
+      var events, modelEvents;
+      modelEvents = this.events || {};
+      events = _(modelEvents).clone();
+      _(events).extend({
+        "click .display": "showEdit",
+        "click .edit .cancel": "showDisplay",
+        "click .edit .save": "commitEdit",
+        "submit .editForm": "commitEdit",
+        "keyup .edit": "editKeyUp"
       });
-      return EditableTemplateView.__super__.initialize.call(this);
+      return EditableTemplateView.__super__.delegateEvents.call(this, events);
     };
 
-    EditableTemplateView.prototype.attributeEditStartClick = function(event) {
-      return this.attributeEditStart($(event.currentTarget).data("attributeEditclick"));
+    EditableTemplateView.prototype.render = function() {
+      EditableTemplateView.__super__.render.call(this);
+      return this.form = new Backbone.Form({
+        model: this.model,
+        el: this.$(".editForm")
+      }).render();
     };
 
-    EditableTemplateView.prototype.attributeEditStart = function(attribute) {
-      var clickable, editable;
-      clickable = this.$("[data-attribute-editclick='" + attribute + "']");
-      editable = this.$("[data-attribute-edit='" + attribute + "']");
-      clickable.hide();
-      editable.val(this.model.get(attribute));
-      editable.show();
-      editable.focus();
-      editable.select();
-      return this.onShowEdit(attribute);
+    EditableTemplateView.prototype.showEdit = function() {
+      var _this = this;
+      this.$(".display").addClass("hide").removeClass("show");
+      this.$(".edit").removeClass("hide").addClass("show");
+      this.$(".chosen-select").chosen();
+      setTimeout(function() {
+        return _this.$(".edit").addClass("scale");
+      }, 0);
+      return setTimeout(function() {
+        return _this.$('.edit form :input').eq(1).focus().select();
+      }, 150);
     };
 
-    EditableTemplateView.prototype.attributeEditDoneClick = function(event) {
-      return this.attributeEditDone($(event.currentTarget).data("attributeEdit"));
+    EditableTemplateView.prototype.showDisplay = function() {
+      var _this = this;
+      this.$(".edit").removeClass("scale");
+      return setTimeout(function() {
+        _this.$(".edit").removeClass("show").addClass("hide");
+        return _this.$(".display").removeClass("hide").addClass("show");
+      }, 150);
     };
 
-    EditableTemplateView.prototype.attributeEditDone = function(attribute) {
-      var clickable, data, editable;
-      clickable = this.$("[data-attribute-editclick='" + attribute + "']");
-      editable = this.$("[data-attribute-edit='" + attribute + "']");
-      clickable = this.$("[data-attribute-editclick='" + attribute + "']");
-      editable.hide();
-      clickable.show();
-      this.onShowClickable(attribute);
-      data = {};
-      data[attribute] = editable.val();
-      this.model.set(data);
-      if (this.autoSave) return this.model.save();
+    EditableTemplateView.prototype.commitEdit = function(event) {
+      var error, errors, _i, _len,
+        _this = this;
+      errors = this.form.validate();
+      if (errors) {
+        for (_i = 0, _len = errors.length; _i < _len; _i++) {
+          error = errors[_i];
+          App.trigger("form:error", {
+            form: this.form,
+            view: this,
+            model: this.model,
+            error: error
+          });
+        }
+      } else {
+        this.showDisplay();
+        setTimeout(function() {
+          _this.form.commit();
+          return _this.model.save();
+        }, 150);
+      }
+      return event.preventDefault();
     };
 
-    EditableTemplateView.prototype.attributeEditKeypress = function(event) {
-      if (event.which === 13) return event.target.blur();
+    EditableTemplateView.prototype.editKeyUp = function(event) {
+      if (event.which === 27) return this.showDisplay();
     };
 
-    EditableTemplateView.prototype.onShowEdit = function(attribute) {};
-
-    EditableTemplateView.prototype.onShowClickable = function(attribute) {};
+    EditableTemplateView.prototype.afterAdd = function() {
+      return this.showEdit();
+    };
 
     return EditableTemplateView;
 
@@ -317,20 +466,15 @@
     };
 
     CollectionView.prototype.addModel = function(model) {
-      var view,
-        _this = this;
+      var view;
       view = this.addModelView(model);
       if (this.prependNew) {
         $(this.el).prepend(view.el);
       } else {
         $(this.el).append(view.el);
       }
-      $(this.el).append(view.el);
-      $(view.el).hide();
       view.render();
-      return $(view.el).fadeIn(function() {
-        if (view.afterAdd) return view.afterAdd();
-      });
+      if (view.afterAdd) return view.afterAdd();
     };
 
     CollectionView.prototype.removeModelView = function(model) {
@@ -361,6 +505,7 @@
     function FilteredCollectionView() {
       this.addModel = __bind(this.addModel, this);
       this.getModels = __bind(this.getModels, this);
+      this.setFilter = __bind(this.setFilter, this);
       this.initialize = __bind(this.initialize, this);
       this.filter = __bind(this.filter, this);
       FilteredCollectionView.__super__.constructor.apply(this, arguments);
@@ -373,6 +518,11 @@
     FilteredCollectionView.prototype.initialize = function() {
       if (this.options.filter) this.filter = this.options.filter;
       return FilteredCollectionView.__super__.initialize.call(this);
+    };
+
+    FilteredCollectionView.prototype.setFilter = function(filter) {
+      this.filter = filter;
+      return this.setup();
     };
 
     FilteredCollectionView.prototype.getModels = function() {
@@ -388,6 +538,59 @@
     return FilteredCollectionView;
 
   })(Foundation.CollectionView);
+
+  methodMap = {
+    'create': 'POST',
+    'update': 'PUT',
+    'delete': 'DELETE',
+    'read': 'GET'
+  };
+
+  getUrl = function(object) {
+    if (!(object && object.url)) return null;
+    if (_.isFunction(object.url)) {
+      return object.url();
+    } else {
+      return object.url;
+    }
+  };
+
+  getParams = function(object) {
+    var key, queryParams, queryString, value;
+    if (!(object && object.url)) return "";
+    queryParams = _.isFunction(object.queryParams) ? object.queryParams() : object.queryParams;
+    queryString = "";
+    if (queryParams && !_.isEmpty(queryParams)) {
+      for (key in queryParams) {
+        value = queryParams[key];
+        queryString = "?" + ("" + key + "=" + value);
+      }
+    }
+    return queryString;
+  };
+
+  urlError = function() {
+    throw new Error('A "url" property or function must be specified');
+  };
+
+  Backbone.sync = function(method, model, options) {
+    var params, type;
+    type = methodMap[method];
+    params = _.extend({
+      type: type,
+      dataType: 'json'
+    }, options);
+    if (!params.url) {
+      params.url = getUrl(model) || urlError();
+      params.url += getParams(model);
+    }
+    if (!params.data && model && (method === 'create' || method === 'update')) {
+      params.contentType = 'application/json';
+      params.data = JSON.stringify(model.toJSON());
+    }
+    if (params.type !== 'GET') params.processData = false;
+    return $.ajax(params);
+  };
 
   init = function() {
     var csrfToken, init, _i, _len, _ref;

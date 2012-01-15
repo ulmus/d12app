@@ -8,8 +8,8 @@ Foundation.markdownConverter = Markdown.getSanitizingConverter()
 
 Handlebars.registerHelper("cardActionDisplay", (abbr) ->
 	switch abbr
-		when "ACTN" then "Primary"
-		when "MOVE" then "Move"
+		when "ACTN" then "Main"
+		when "MOVE" then "Positioning"
 		when "SPRT" then "Support"
 		when "REAC" then "Reaction"
 )
@@ -25,6 +25,11 @@ Handlebars.registerHelper("cardActionClassName", (abbr) ->
 Handlebars.registerHelper("markdown", (markdownText) ->
 	return Foundation.markdownConverter.makeHtml(markdownText)
 )
+
+Handlebars.registerHelper("collectionCount", (collection) ->
+	return collection.length
+)
+
 
 templateHash = {}
 
@@ -48,6 +53,64 @@ Foundation.getTemplate = (templateName) ->
 
 Foundation.generateTemplates()
 
+
+# Model and Collection
+
+class Foundation.Collection extends Backbone.Collection
+
+	initialize: (models, options) =>
+		options or (options = {})
+		@_params = if options.params then options.params else {}
+		super(models, options)
+
+	queryParams: =>
+		return @_params
+
+	setParam: (key, value) =>
+		@_params[key] = value
+
+	unsetParam: (key) =>
+		delete @_params[key]
+
+	url: =>
+		@rootUrl
+
+class Foundation.Model extends Backbone.Model
+
+	_params: {}
+
+	queryParams: =>
+		return @_params
+
+	toString: =>
+		return "model"
+
+	toJSON: =>
+		attr = _(@attributes).clone()
+		delete attr.id
+		attr
+
+#  Form Fields
+
+class Backbone.Form.editors.MultipleSelect extends Backbone.Form.editors.Select
+
+	renderOptions: (options) =>
+		super(options)
+		$(@el).attr("multiple", "multiple")
+
+class Backbone.Form.editors.ChosenMultipleSelect extends Backbone.Form.editors.MultipleSelect
+
+	renderOptions: (options) =>
+		super(options)
+		$(@el).addClass("chosen-select")
+
+class Backbone.Form.editors.ChosenSelect extends Backbone.Form.editors.Select
+
+	renderOptions: (options) =>
+		super(options)
+		$(@el).addClass("chosen-select")
+
+
 # Generic Views
 
 class Foundation.TemplateView extends Backbone.View
@@ -59,17 +122,17 @@ class Foundation.TemplateView extends Backbone.View
 		super()
 	
 	render: =>
-		@preRender();
 		if @model and @constructor.template
-			$(@el).html(@constructor.template({model: @model.toJSON()}))
+			$(@el).html(@constructor.template(@getContext()))
 		@delegateEvents()
-		super
-		@postRender();
-		
-	preRender: =>
-		
-	postRender: =>
-		
+		super()
+
+	getContext: =>
+		return {
+			model: @model
+			attr: @model.toJSON()
+		}
+
 	setModel: (newModel) =>
 		@unbindModel(@model)
 		@model = newModel
@@ -97,56 +160,72 @@ class Foundation.TemplateView extends Backbone.View
 
 
 class Foundation.EditableTemplateView extends Foundation.TemplateView
-	
-	autoSave : false
-	
-	initialize: () =>
-		@events["click [data-attribute-editclick]"] = "attributeEditStartClick"
-		@events["blur [data-attribute-edit]"] = "attributeEditDoneClick"
-		@events["keypress input[type='text'][data-attribute-edit]"] = "attributeEditKeypress"
-		@delegateEvents()
-		_(@autoSave).defaults(
-			autoSave: @options.autoSave
+
+	@modelName = "object"
+
+	delegateEvents: =>
+		modelEvents = @events || {};
+		events = _(modelEvents).clone()
+		_(events).extend(
+			"click .display"		: "showEdit"
+			"click .edit .cancel"	: "showDisplay"
+			"click .edit .save"		: "commitEdit"
+			"submit .editForm"		: "commitEdit"
+			"keyup .edit"			: "editKeyUp"
 		)
+		super(events)
+
+	render: =>
 		super()
-	
-	attributeEditStartClick: (event) =>
-		@attributeEditStart($(event.currentTarget).data("attributeEditclick"))
-		
-			
-	attributeEditStart: (attribute) =>
-		clickable = @.$("[data-attribute-editclick='#{attribute}']")
-		editable = @.$("[data-attribute-edit='#{attribute}']")
-		clickable.hide()
-		editable.val(@model.get(attribute))
-		editable.show()
-		editable.focus()
-		editable.select()
-		@onShowEdit(attribute)
-		
-	attributeEditDoneClick: (event) =>
-		@attributeEditDone($(event.currentTarget).data("attributeEdit"))
-		
-	attributeEditDone: (attribute) =>
-		clickable = @.$("[data-attribute-editclick='#{attribute}']")
-		editable = @.$("[data-attribute-edit='#{attribute}']")
-		clickable = @.$("[data-attribute-editclick='#{attribute}']")
-		editable.hide()
-		clickable.show()
-		@onShowClickable(attribute)
-		data = {}
-		data[attribute] = editable.val()
-		@model.set(data)
-		if @autoSave
-			@model.save()
-	
-	attributeEditKeypress: (event) =>
-		if event.which == 13
-			(event.target).blur()
-	
-	onShowEdit: (attribute) =>
-	
-	onShowClickable: (attribute) =>
+		@form = new Backbone.Form(
+			model: @model,
+			el: @.$(".editForm")
+		).render()
+
+	showEdit: =>
+		@$(".display").addClass("hide").removeClass("show")
+		@$(".edit").removeClass("hide").addClass("show")
+		@$(".chosen-select").chosen()
+		setTimeout(=>
+			@.$(".edit").addClass("scale")
+		,0)
+		setTimeout(=>
+			@.$('.edit form :input').eq(1).focus().select()
+		,150)
+
+	showDisplay: =>
+		@.$(".edit").removeClass("scale")
+		setTimeout(=>
+			@.$(".edit").removeClass("show").addClass("hide")
+			@.$(".display").removeClass("hide").addClass("show")
+		, 150)
+
+	commitEdit: (event) =>
+		errors = @form.validate()
+		if errors
+			for error in errors
+				App.trigger("form:error", {
+					form: @form,
+					view: @,
+					model: @model,
+					error: error
+				})
+		else
+			@showDisplay()
+			setTimeout(=>
+				@form.commit()
+				@model.save()
+			,150)
+
+		return event.preventDefault()
+
+	editKeyUp: (event) =>
+		if event.which == 27
+			@showDisplay()
+
+	afterAdd: =>
+		@showEdit()
+
 
 class Foundation.CollectionView extends Backbone.View
 	
@@ -214,14 +293,10 @@ class Foundation.CollectionView extends Backbone.View
 		else
 			$(@el).append(view.el)
 
-		$(@el).append(view.el)
-		$(view.el).hide()
 		view.render()
-		$(view.el).fadeIn(=>
-			if view.afterAdd
-				view.afterAdd()
-		)
-	
+		if view.afterAdd
+			view.afterAdd()
+
 	removeModelView: (model) =>
 		view = @modelViews[model.cid]
 		if view
@@ -245,6 +320,10 @@ class Foundation.FilteredCollectionView extends Foundation.CollectionView
 			@filter = @options.filter
 		super()
 
+	setFilter: (filter) =>
+		@filter = filter
+		@setup()
+
 	getModels: =>
 		return @collection.filter(@filter)
 			
@@ -252,6 +331,65 @@ class Foundation.FilteredCollectionView extends Foundation.CollectionView
 		if @filter(model)
 			super()
 			
+# Backbone.sync
+
+# Map from CRUD to HTTP for our default `Backbone.sync` implementation.
+methodMap =
+	'create': 'POST',
+	'update': 'PUT',
+	'delete': 'DELETE',
+	'read'  : 'GET'
+
+# Helper function to get a URL from a Model or Collection as a property
+# or as a function.
+getUrl = (object) ->
+  if (not (object && object.url)) then return null
+  return if _.isFunction(object.url) then object.url() else object.url
+
+# If the collection or model has a queryParams attribute, cas a function or object literal
+# use it to set the query-string
+
+getParams = (object) ->
+	if (not (object && object.url)) then return ""
+	queryParams = if _.isFunction(object.queryParams) then object.queryParams() else object.queryParams
+	queryString = ""
+	if queryParams and not _.isEmpty(queryParams)
+		queryString = "?" + "#{key}=#{value}" for key, value of queryParams
+	return queryString
+
+# Throw an error when a URL is needed, and none is supplied.
+urlError = ->
+	throw new Error('A "url" property or function must be specified')
+
+
+Backbone.sync = (method, model, options) ->
+	type = methodMap[method]
+
+	# Default JSON-request options.
+	params = _.extend({
+	  type:         type
+	  dataType:     'json'
+	}, options)
+
+	# Ensure that we have a URL.
+	if not params.url
+	  params.url = getUrl(model) or urlError()
+	  params.url += getParams(model)
+
+
+	# Ensure that we have the appropriate request data.
+	if not params.data and model and (method == 'create' or method == 'update')
+	  params.contentType = 'application/json';
+	  params.data = JSON.stringify(model.toJSON());
+
+
+	# Don't process data on a non-GET request.
+	if (params.type != 'GET')
+	  params.processData = false
+
+	# Make the request.
+	return $.ajax(params)
+
 
 # Initialization
 

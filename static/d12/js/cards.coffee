@@ -8,18 +8,18 @@ baseUrl = "/api/cards/"
 
 # The Card Models and Collections
 
-class Cards.Card extends Backbone.Model
+class Cards.Card extends Foundation.Model
 
-	urlRoot: baseUrl + "card/"
+	@name: "card"
+
+	rootUrl: baseUrl + "card/"
 	
 	defaults:
 		description		: ""
 		title			: ""
-		phase_1			: false
-		phase_2			: false
-		phase_3			: false
 		type			: "ACTN"
 		body			: ""
+		keywords		: []
 		
 	schema:
 		title:
@@ -35,206 +35,297 @@ class Cards.Card extends Backbone.Model
 			type: "Select"
 			title: "Card Type"
 			options: [
-				{val: "ACTN", label: "Primary"},
-				{val: "MOVE", label: "Move"},
+				{val: "ACTN", label: "Main"},
+				{val: "MOVE", label: "Positioning"},
 				{val: "SPRT", label: "Support"},
 				{val: "REAC", label: "Reaction"},				
 			]
-		phase_1:
-			title: "Phase 1"
+		protected:
 			type: "Checkbox"
-		phase_2:
-			title: "Phase 2"
-			type: "Checkbox"
-		phase_3:
-			title: "Phase 3"
-			type: "Checkbox"			
+			title: "Protected"
 
-class Cards.CardCollection extends Backbone.Collection
+
+	toString: =>
+		@get("title")
+
+class Cards.CardCollection extends Foundation.Collection
 
 	model: Cards.Card
-	favorites = false
+	rootUrl: baseUrl + "card/"
 
-	url: =>
-		url = baseUrl + "card/"
-		parameters = []
-		if @deck
-			parameters.push(key: "deck", value: @deck)
-		
-		if not _(parameters).isEmpty()
-			url += "?"
-		for param in parameters
-			url += "#{param.key}=#{param.value}&"
-		
-		return url
-			
 	comparator: (model) ->
 		return model.get("title")
-	
-	addCard: =>
-		@create()
-		
-	initialize: (models, options) =>
-		if options and options.deck
-			@deck = options.deck
-		super(models, options)
 
 
+class Cards.Deck extends Foundation.Model
+	@name: "deck"
 
-class Cards.Deck extends Backbone.Model
-	
-	urlRoot: baseUrl + "deck/"
+	rootUrl: baseUrl + "deck/"
 	
 	defaults:
-		title:			""
+		title:			"New deck"
 		description:	""
 
-	initialize: =>
-		@cardsInDeck = new Cards.CardInDeckCollection(deck: @id)
-		@cardsInDeck.fetch()
+	schema:
+		title:
+			type: "Text"
+			title: "Title"
+		description:
+			type: "Text"
+			title: "Description"
 
-class Cards.DeckCollection extends Backbone.Collection
+	toString: =>
+		@get("title")
+
+
+class Cards.DeckCollection extends Foundation.Collection
+
+	model: Cards.Deck
+	rootUrl: baseUrl + "deck/"
+
+
+class Cards.CardInDeck extends Foundation.Model
 	
-	url: =>
-		url = baseUrl + "deck/"
-		parameters = []
-		if @user
-			parameters.push(key: "user", value: @user)
-		
-		if not _(parameters).isEmpty()
-			url += "?"
-		for param in parameters
-			url += "#{param.key}=#{param.value}&"
-		
-		return url
-
-	initialize: (models, options) =>
-		if options and options.user
-			@user = options.user
-		super(models,options)
-
-
-class Cards.CardInDeck extends Backbone.Model
-	
-	urlRoot: baseUrl + "cardindeck/"
+	rootUrl: baseUrl + "cardindeck/"
 	
 	defaults:
 		deck:		0
 		card:		0
 		order:		0
 		
+
 	getCard: =>
-		return App.cards.get(@.get("card"))
+		return App.allCards.get(@.get("card"))
 	
 	getDeck: =>
 		return App.decks.get(@.get("deck"))
 	
-class Cards.CardInDeckCollection extends Backbone.Collection
-		
-	url: =>
-		url = baseUrl + "cardindeck/"
-		parameters = []
-		if @user
-			parameters.push(key: "deck", value: @deck)
-		
-		if not _(parameters).isEmpty()
-			url += "?"
-		for param in parameters
-			url += "#{param.key}=#{param.value}&"
-		
-		return url
+	toString: =>
+		@get("title")
 
-	initialize: (models, options) =>
-		if options and options.deck
-			@deck = options.deck
-		super(models,options)
+class Cards.CardInDeckCollection extends Foundation.Collection
 
-# Views
+	model: Cards.CardInDeck
+	rootUrl: baseUrl + "cardindeck/"
+
+########################
+# VIEWS                #
+########################
 
 class Cards.CardView extends Foundation.EditableTemplateView
 		
-	@template: Foundation.getTemplate("tmplCardContent")
-	
-	events:
-		"click .card.display"		: "showEdit"
-		"click .card.edit .cancel"	: "showDisplay"
-		"click .card.edit .save"	: "commitEdit"
-		"click .card.edit .delete"	: "showDeleteModal"
-		"submit .editForm"			: "commitEdit"
-		"keyup .card.edit"			: "editKeyUp"
-	
-	autoSave: true
+	@template: Foundation.getTemplate("tmplCard")
+	@modelName = "card"
 	
 	render: =>
 		super()
-		@form = new Backbone.Form(
-			model: @model,
-			el: @.$(".editForm")
-		).render()
-		$(@el).draggable(
+		@$(".card").draggable(
+			appendTo: "body"
 			helper: "clone"
+			delay: 50
 			cursorAt:
 				left: 120
 				top: 170
 		)
+		@
 
-	showDeleteModal: =>
-		@showDisplay()
-		$(".deleteModal .cardTitle").text(@model.get("title"))
-		$(".deleteModal").modal("show")
-		$(".deleteModal .do").data(modelId: @model.get("id"))
-		
-	delete: =>
-		@model.destroy()
-		
-	afterAdd: =>
-		@showEdit()
-	
 	showEdit: =>
-		@.$(".card.display").addClass("hide").removeClass("show")
-		@.$(".card.edit").removeClass("hide").addClass("show")
-		setTimeout(=>
-			@.$(".card.edit").addClass("scale")
-		,0)
-		setTimeout(=>
-			@.$('.card.edit :input').eq(3).focus().select()
-		,150)
-	
-	showDisplay: =>
-		@.$(".card.edit").removeClass("scale")
-		setTimeout(=>
-			@.$(".card.edit").removeClass("show").addClass("hide")
-			@.$(".card.display").removeClass("hide").addClass("show")
-		, 150)
-	
-	commitEdit: (event) =>
-		errors = @form.validate()
-		if errors
-			for error in errors
-				App.trigger("form:error", {
-					form: @form,
-					view: @,
-					model: @model,
-					error: error
-				})
-		else
-			@showDisplay()
-			setTimeout(=>
-				@form.commit()
-				@model.save()
-			,150)
-			
-		return event.preventDefault()
-		
-	editKeyUp: (event) =>
-		if event.which == 27
-			@showDisplay()
-			
-	
+		super()
+		@$(".editForm textarea#body").popover({
+			title: => "Formatting help"
+			content: => $("#markdown-help").html()
+			html: true
+			trigger: "focus"
+		})
 
-class Cards.CardListView extends Foundation.TemplateView
-		
-	@template: Foundation.getTemplate("tmplCardListContent")
+
+class Cards.CardInDeckView extends Foundation.TemplateView
+
+	@template: Foundation.getTemplate("tmplCardInDeck")
+
+	getContext: =>
+		return {
+			attr: @model.toJSON()
+			model: @model
+			card: App.allCards.get(@model.get("card"))
+			deck: App.decks.get(@model.get("deck"))
+		}
+
+	render: =>
+		super()
+		@$(".card").draggable(
+			appendTo: "body"
+			helper: "clone"
+			delay: 50
+			cursorAt:
+				left: 120
+				top: 170
+		)
+		@
+
+class Cards.DeckView extends Foundation.EditableTemplateView
+
+	@template: Foundation.getTemplate("tmplDeck")
+
+	initialize: =>
+		super()
+		App.allCardsInDecks.bind("reset", @updateNumberOfCards, @)
+		App.allCardsInDecks.bind("add", @updateNumberOfCards, @)
+		App.allCardsInDecks.bind("remove", @updateNumberOfCards, @)
+
+	render: =>
+		super()
+		@$(".deck").droppable(
+			tolerance: "pointer"
+			accept: ".card"
+			hoverClass: 'drophover'
+			drop: (event, ui) =>
+				@dropCard(event, ui)
+		)
+		@updateNumberOfCards()
+		@
+
+	dropCard: (event, ui) =>
+		App.allCardsInDecks.create(
+			card: ui.draggable.data("cardId")
+			deck: @model.id
+		)
+
+	updateNumberOfCards: =>
+		count = App.allCardsInDecks.filter((model)=>
+			return (model.get("deck") == @model.id)
+		).length
+		@$(".number-of-cards").text(count)
+
+
+	remove: =>
+		App.allCardsInDecks.unbind("reset", @updateNumberOfCards)
+		App.allCardsInDecks.unbind("add", @updateNumberOfCards)
+		App.allCardsInDecks.unbind("remove", @updateNumberOfCards)
+
+class Cards.TrashView extends Backbone.View
+
+	render: =>
+		super()
+		$(@el).droppable(
+			tolerance: "pointer"
+			accept: ".card",
+			hoverClass: 'drophover'
+			drop: (event, ui) =>
+				@dropCard(event, ui)
+		)
+
+	dropCard: (event, ui) =>
+		modelId = ui.draggable.data("modelId")
+		modelType = ui.draggable.data("modelType")
+		isProtected = ui.draggable.data("protected")
+		switch modelType
+			when "card"
+				object = App.allCards.get(modelId)
+				if object and not isProtected
+					@showDeleteModal(object)
+			when "cardInDeck"
+				object = App.allCardsInDecks.get(modelId)
+				if object and not isProtected
+					object.destroy()
+		if object and isProtected
+			@showProtectedModal(object)
+
+
+	showDeleteModal: (model) =>
+		modalString = Foundation.getTemplate("tmplDeleteModal")(
+			modelName: model.constructor.name
+			instanceName: model.toString()
+		)
+		deleteModal = $(modalString).modal(
+			keyboard: true,
+			backdrop: true,
+		)
+		deleteModal.bind('hidden', =>
+			deleteModal.remove()
+		)
+		$(".do", deleteModal).click(=>
+			model.destroy()
+			deleteModal.modal("hide")
+		)
+		$(".cancel", deleteModal).click(=>
+			deleteModal.modal("hide")
+		)
+
+		deleteModal.focus()
+		deleteModal.modal("show")
+
+	showProtectedModal: (model) =>
+		modalString = Foundation.getTemplate("tmplProtectedModal")(
+			modelName: model.constructor.name
+			instanceName: model.toString()
+		)
+		protectedModal = $(modalString).modal(
+			keyboard: true,
+			backdrop: true,
+		)
+		protectedModal.bind('hidden', =>
+			protectedModal.remove()
+		)
+		$(".cancel", protectedModal).click(=>
+			protectedModal.modal("hide")
+		)
+		protectedModal.focus()
+		protectedModal.modal("show")
+
+class Cards.ShowCardsMenuView extends Backbone.View
+
+	events:
+		"click .show-menu-item":	"showMenu"
+
+	@itemTemplate: Handlebars.compile("<li><a class='show-menu-item' href='#' data-model-id='{{model.id}}'>{{attr.title}}</a></li>")
+
+	shownId: 0
+
+	initialize: =>
+		super()
+		@collection = @options.collection
+		@collection.bind("reset", @render, @)
+		@collection.bind("add", @render, @)
+		@collection.bind("remove", @render, @)
+		@collection.bind("change", @render, @)
+
+	render: =>
+		html = "<li><a class='show-menu-item' href='#' data-model-id='-1'>All cards</a></li>"
+		for model in @collection.models
+			html += @constructor.itemTemplate(
+				attr: model.toJSON(),
+				model: model
+			)
+		$(@el).html(html)
+		@updateHeader()
+
+	showMenu: (event) =>
+		modelId = $(event.target).data("modelId")
+		@shownId = modelId
+		if modelId > 0
+			intId = parseInt(modelId)
+			$(App.allCardsView.el).hide()
+			App.cardSheetView.setFilter((model) -> return model.get("deck") == intId)
+			$(App.cardSheetView.el).show()
+		else
+			$(App.cardSheetView.el).hide()
+			$(App.allCardsView.el).show()
+		@updateHeader()
+
+	updateHeader: =>
+		if @shownId > 0
+			header = App.decks.get(@shownId) and App.decks.get(@shownId).get("title")
+		else
+			header = "All cards"
+		$("#cards-header").text(header)
+
+	remove: =>
+		@collection.unbind("reset", @render)
+		@collection.unbind("add", @render)
+		@collection.unbind("remove", @render)
+		@collection.unbind("change", @render)
+
 
 # Router
 
@@ -245,42 +336,64 @@ class Cards.D12Router extends Backbone.Router
 		@.bind("form:error", @.showError)
 		
 		# Views and general collections
-		@cards = new Cards.CardCollection()
-		
-		@cardSheetView = new Foundation.CollectionView({
+		@allCards = new Cards.CardCollection()
+		@allCards.fetch()
+
+		@allCardsView = new Foundation.CollectionView({
 			prependNew: true,
-			el: "#cardSheetView",
-			collection: @cards,
+			el: "#allCardsView",
+			collection: @allCards,
 			modelViewClass: Cards.CardView
 		})
-		@cards.fetch()
-		
+
+		@allCardsInDecks = new Cards.CardInDeckCollection()
+		@allCardsInDecks.fetch()
+
+		@cardsInDeck = new Cards.CardInDeckCollection()
+		@cardSheetView = new Foundation.FilteredCollectionView({
+			el: "#cardSheetView",
+			collection: @allCardsInDecks,
+			modelViewClass: Cards.CardInDeckView
+			filter: (model)-> return false
+		})
+
+		@decks = new Cards.DeckCollection()
+		@deckListView = new Foundation.CollectionView(
+			prependNew: true,
+			el: "#decksView",
+			collection: @decks,
+			modelViewClass: Cards.DeckView
+		)
+		@showMenu = new Cards.ShowCardsMenuView(
+			el: $("#cards-showMenu")
+			collection: @decks
+		)
+		@decks.fetch()
+
+		# Trash can
+		@trashView = new Cards.TrashView(
+			el: "#trashView"
+		)
+		@trashView.render()
+
 		# Navigation bar
 		$("#cards-addCard").click(=>
 			@cards.create()
 		)
-		$("#cards-refreshCards").click(=>@cards.fetch())
 
-		# Generic app functions
-		$(".deleteModal").modal(
-			keyboard: true,
-			backdrop: true,
+		$("#cards-addDeck").click(=>
+			@decks.create(
+				user: currentUserId
+			)
 		)
-		$("body").on("click", ".deleteModal .do", @deleteClick)
-		$("body").on("click",".modal .cancel", (event)=>
-			$(".deleteModal").modal("hide")
-		)	
-		
+		$("#cards-refreshCards").click(=>
+			@allCards.fetch()
+			@decks.fetch()
+			@cardsInDeck.fetch()
+		)
+
 		super()
-	
-	deleteClick: (event) =>
-			cardId = $(".deleteModal .do").data("modelId")
-			card = @cards.get(cardId)
-			if card
-				@cards.remove(card)
-				card.destroy()
-			$(".deleteModal").modal("hide")
-					
+
 	showError: (errorData) =>
 		$("<div>#{errorData.error}<p><button class='btn cancel'>Ok</button></p></div>").modal(
 			title: "Validation error"

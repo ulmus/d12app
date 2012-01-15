@@ -1,5 +1,5 @@
-.noprint {
-	display: none;
+.noprint, .hide {
+	display: none !important;
 }
 
 body {

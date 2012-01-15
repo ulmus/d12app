@@ -3,12 +3,12 @@ from django.conf.urls.defaults import patterns, include, url
 import views
 
 urlpatterns = patterns('',
-    url(r'^card/$', login_required(views.CardView.as_view())),
-	url(r'^card/(?P<id>\d+)$', login_required(views.CardView.as_view())),
+    url(r'^card/$', views.CardListView.as_view()),
+	url(r'^card/(?P<id>\d+)$', views.CardInstanceView.as_view()),
 
-	url(r'^deck/$', login_required(views.DeckView.as_view())),
-	url(r'^deck/(?P<id>\d+)$', login_required(views.DeckView.as_view())),
+	url(r'^deck/$', views.DeckListView.as_view()),
+	url(r'^deck/(?P<id>\d+)$', views.DeckInstanceView.as_view()),
 
-	url(r'^cardindeck/$', login_required(views.CardInDeckView.as_view())),
-	url(r'^cardindeck/(?P<id>\d+)$', login_required(views.CardInDeckView.as_view())),
+	url(r'^cardindeck/$', views.CardInDeckListView.as_view()),
+	url(r'^cardindeck/(?P<id>\d+)$', views.CardInDeckInstanceView.as_view()),
 )

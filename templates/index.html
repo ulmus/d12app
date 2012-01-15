@@ -4,13 +4,15 @@
 <head>
 	<meta charset="utf-8">
 	<title>d12app</title>
-	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-ui/css/smoothness/jquery-ui-1.8.16.custom.css">
-	<link rel="stylesheet" type="text/css" href="/static/lib/bootstrap/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-ui/css/smoothness/jquery-ui-1.8.16.custom.css"  media="screen">
+	<link rel="stylesheet" type="text/css" href="/static/lib/bootstrap/bootstrap.min.css"  media="screen">
+	<link rel="stylesheet" type="text/css" href="/static/lib/chosen/chosen.css" media="screen">
 	<link rel="stylesheet" type="text/css" href="/static/lib/fonts/websymbols/stylesheet.css">
 	<link rel="stylesheet" type="text/css" href="/static/d12/css/style.css">
 	<link rel="stylesheet" type="text/css" href="/static/d12/css/style-print.css" media="print">
 	<script src="/static/lib/js/jquery-1.7.1.min.js"></script>
 	<script src="/static/lib/jquery-ui/js/jquery-ui-1.8.16.custom.min.js"></script>
+	<script src="/static/lib/chosen/chosen.jquery.min.js"></script>
 	<script src="/static/lib/js/underscore-min.js"></script>
 	<script src="/static/lib/js/moment.min.js"></script>
 	<script src="/static/lib/js/backbone.js"></script>
@@ -28,27 +30,24 @@
 
 	<!-- Templates -->
 	{% verbatim %}
-	<script id="tmplCardContent" type="text/x-template">
-	<div class="card display clickable">
-		<div class="contents {{cardActionClassName model.type}}">
+	<script id="tmplCard" type="text/x-template">
+	<div class="card display clickable editable" data-model-id="{{model.id}}" data-card-id="{{ model.id }}" data-model-type="card" data-protected="{{ attr.protected }}">
+		<div class="contents {{cardActionClassName attr.type}}">
 			<h2 class="title">
-				{{model.title}}
+				{{attr.title}}
 			</h2>
 			<div class="cardtext">
 				<div class="description">
-						<p>{{model.description}}<p>
+						<p>{{attr.description}}<p>
 				</div>
 				<div class="body">
-					{{{markdown model.body}}}
+					{{{markdown attr.body}}}
 				</div>
 			</div>
 			<ul class="icons left">
-				<li class="action-type">{{cardActionDisplay model.type}}</li>
+				<li class="action-type">{{cardActionDisplay attr.type}}</li>
 			</ul>
 			<ul class="icons right">
-				<li data-bind class="phase{{#if model.phase_1 }} enabled{{/if}} phase_1">1</li>
-				<li class="phase{{#if model.phase_2 }} enabled{{/if}} phase_2">2</li>
-				<li class="phase{{#if model.phase_3 }} enabled{{/if}} phase_3">3</li>
 			</ul>
 		</div>
 	</div>
@@ -56,25 +55,106 @@
 		<div class="contents">
 			<h3>Edit card</h3>
 			<form class="editForm">
+			</form>
 			<div class="toolbar">
-				<input type=submit class="btn primary save nofocus" value="Save">
-				<button class="btn danger delete">Delete</button>
+				<button class="btn primary save nofocus" value="Save">Save</button>
 				<button class="btn cancel">Cancel</button>
 			</div>
-			</form>
 		</div>
 	</div>
 	</script>
+
+	<script id="tmplCardInDeck" type="text/x-template">
+		<div class="card display clickable" data-model-id="{{model.id}}" data-deck-id="{{ deck.id }}" data-card-id="{{ card.id }}" data-model-type="cardInDeck">
+			<div class="contents {{cardActionClassName card.attributes.type}}">
+				<h2 class="title">
+					{{card.attributes.title}}
+				</h2>
+				<div class="cardtext">
+					<div class="description">
+							<p>{{card.attributes.description}}<p>
+					</div>
+					<div class="body">
+						{{{markdown card.attributes.body}}}
+					</div>
+				</div>
+				<ul class="icons left">
+					<li class="action-type">{{cardActionDisplay card.attributes.type}}</li>
+				</ul>
+				<ul class="icons right">
+				</ul>
+			</div>
+		</div>
+	</script>
+
+	<script id="tmplDeck" type="text/x-template">
+	<div class="deck display clickable visual-drop-target" data-model-id="{{model.id}}">
+		<div class="contents">
+			<div class="number-of-cards"></div>
+			<h2 class="title">
+				{{attr.title}}
+			</h2>
+		</div>
+	</div>
+	<div class="deck edit hide">
+		<div class="contents">
+			<h3>Edit deck</h3>
+			<form class="editForm">
+				<input type=submit class="hide" value="Save">
+			</form>
+			<div class="toolbar">
+				<button class="btn primary save nofocus">Save</button>
+				<button class="btn danger delete">Delete</button>
+				<button class="btn cancel">Cancel</button>
+			</div>
+		</div>
+	</div>
+	</script>
+
+
 	<script id="tmplCardListContent" type="text/x-template">
 	{{#each model}}
 	<li><a href="#card/{{this.id}}/">{{this.title}}</a></li>
 	{{/each}}
+	</script>
+
+	<script id="tmplDeleteModal" type="text/x-template">
+		<div class="deleteModal modal hide fade" style="display: none; ">
+	        <div class="modal-header">
+	          <a href="#" class="close">×</a>
+	          <h3>Warning!</h3>
+	        </div>
+	        <div class="modal-body">
+	          <p>Do you wan&#39;t to delete the {{modelName}} "<em>{{instanceName}}</em>"? This action can&#39;t be undone!</p>
+	        </div>
+	        <div class="modal-footer">
+	          <a href="#" class="btn danger do">Delete "<em>{{instanceName}}</em>"</a>
+	          <a href="#" class="btn secondary cancel">Cancel</a>
+	        </div>
+	    </div>
+	</script>
+		
+	<script id="tmplProtectedModal" type="text/x-template">
+		<div class="deleteModal modal hide fade" style="display: none; ">
+			<div class="modal-header">
+			  <a href="#" class="close">×</a>
+			  <h3>Unable to put protected {{ modelName }} in trash</h3>
+			</div>
+			<div class="modal-body">
+			  <p>You can&#39;t delete the {{modelName}} "<em>{{instanceName}}</em>" because it is marked as protected.</p>
+			  <p>If you wan&#39;t to delete the {{ modelName }}, you will have to unmark the protected flag first.</p>
+			</div>
+			<div class="modal-footer">
+			  <a href="#" class="btn cancel">Ok</a>
+			</div>
+		</div>
 	</script>
 	{% endverbatim %}
 
 	<!-- Initiate -->
 	<script>
 		currentUserId = {{ user.id}};
+		currentUserIsAdmin = {% if user.is_staff %}true{% else %}false{% endif %};
 	</script>
 	<script src="/static/d12/js/min/foundation.js"></script>
 	<script src="/static/d12/js/min/cards.js"></script>
@@ -88,7 +168,14 @@
           <a class="brand" href="#">d12app</a>
           <ul class="nav">
             <li class=""><a id="cards-addCard" href="#"><span class="websymbol">+</span> Add card</a></li>
+		    <li class=""><a id="cards-addDeck" href="#"><span class="websymbol">+</span> Add deck</a></li>
             <li class=""><a id="cards-refreshCards" href="#"><span class="websymbol">V</span> Refresh</a></li>
+			<li class="dropdown" data-dropdown="dropdown">
+				<a href="#" class="dropdown-toggle">Show</a>
+				<ul class="dropdown-menu" id="cards-showMenu">
+					
+				</ul>
+			</li>
           </ul>
           <ul class="secondary-nav">
 			{% if user.is_staff %}
@@ -101,29 +188,55 @@
     </div>
 	<div class="container">
 		<div class="row">
-			<div class="span14 offset1 messages">
-			</div>
+			<div class="span14 offset2 noprint"><h1 id="cards-header">All cards</h1></div>
 		</div>
 		<div class="row">
-			<div class="span14 offset1">
-				<div id="cardSheetView" class="card-sheet">
+			<div class="span2 noprint relative">
+				&nbsp;
+				<div class="sidebar fixed">
+					<div id="trashView" class="trash">
+					</div>
+				</div>
+			</div>
+			<div class="span13 card-sheet">
+				<div id="cardSheetView">
+				</div>
+				<div id="allCardsView">
+				</div>
+				&nbsp;
+			</div>
+			
+			<div class="span1 noprint relative">
+				<div id="decksView" class="deck-list fixed">
 				</div>
 			</div>
 		</div>
 	</div>
-	<!-- modals -->
-	<div class="deleteModal modal hide fade" style="display: none; ">
-        <div class="modal-header">
-          <a href="#" class="close">×</a>
-          <h3>Warning!</h3>
-        </div>
-        <div class="modal-body">
-          <p>Do you wan&#39;t to delete the card <em class="cardTitle"></em>? This action can&#39;t be undone!</p>
-        </div>
-        <div class="modal-footer">
-          <a href="#" class="btn danger do">Delete <em class="cardTitle"></em></a>
-          <a href="#" class="btn secondary cancel">Cancel</a>
-        </div>
-    </div>
+	<div id="markdown-help" class="hide">
+		<p>Use <a href="http://daringfireball.net/projects/markdown/syntax" target="_new">markdown</a> for formatting:</p>
+
+<pre>
+*italic* **bold**
+_italic_ __bold__
+
+# Header 1
+## Header 2
+
+List:
+* item
+* item
+
+Numbered list:
+1. item
+2. item
+
+Two returns for new paragraph
+End a line with two or more spaces for line break
+
+Horizontal line:
+---
+</pre>
+	</div>
+
 </body>
 </html>

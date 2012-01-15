@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib.auth.models import User
-import fields
+from foundation import fields
 
 CARD_TYPE_CHOICES = (
 	("ACTN", "Action"),
@@ -14,10 +14,9 @@ class Card(models.Model):
 	title = models.CharField(max_length=80, blank=True, null=True)
 	description = models.TextField(blank=True, null=True)
 	body = models.TextField(blank=True, null=True)
+	keywords = fields.JSONField(blank=True, null=True)
 	type = models.CharField(max_length=4, choices=CARD_TYPE_CHOICES, default="ACTN")
-	phase_1 = models.BooleanField(default=False)
-	phase_2 = models.BooleanField(default=False)
-	phase_3 = models.BooleanField(default=False)
+	protected = models.BooleanField(default=False, blank=True)
 
 	class Meta:
 		ordering = ("title",)

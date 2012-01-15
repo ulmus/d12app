@@ -13,7 +13,7 @@ body {
 }
 
 .websymbol {
-	font-family: 'WebSymbolsRegular';
+	font-family: 'WebSymbolsRegular' sans-serif;
 }
 
 .placeholder {
@@ -26,7 +26,6 @@ div.card-sheet {
 }
 
 div.card {
-	/*font-family: 'Expletus Sans', sans-serif;*/
 	font-size: 12pt;
 	height: 88mm;
 	width: 63mm;
@@ -35,35 +34,18 @@ div.card {
 	page-break-inside: avoid;
 }
 
-div.card .flipClick {
-	position: absolute;
-	top: -1.5mm;
-	left: -1.5mm;
-	color: #333;
-	width: 6mm;
-	height: 6mm;
-	border: 2px solid #333;
-	border-radius: 5mm;
-	text-align: center;
-	font-size: 18px;
-	line-height: 24px;
-	background-color: white;
-	box-shadow: 2px 2px 5px black;
-}
 
 .ui-draggable-dragging {
+	z-index: 2000;
 	opacity: 0.6;
 	-webkit-transform: scale(.5) rotate(5deg);
-	-moz-transform: scale(.5);
-	-ms-transform: scale(.5);
-	transform: scale(.5);
+	-moz-transform: scale(.5) rotate(5deg);
+	-ms-transform: scale(.5) rotate(5deg);
+	transform: scale(.5) rotate(5deg);
 }
 
 div.card .contents {
 	position: absolute;
-	margin: 2mm 2mm 2mm;
-	height: 84mm;
-	width: 59mm;
 	border-radius: 3mm;
 	border: 0.75mm solid black;
 	box-shadow:	2px 2px 5px #333;
@@ -74,8 +56,11 @@ div.card .contents {
 	background-color: white;
 }
 
-div.card.display .hide {
-	-webkit-transform: opacity(0.0);
+div.card.display .contents {
+	top: 2mm;
+	left: 2mm;
+	height: 80mm;
+	width: 56mm;
 }
 
 div.card.edit .contents {
@@ -83,6 +68,13 @@ div.card.edit .contents {
 	width: 88.5mm;
 	top: -22mm;
 	left: -16mm;
+}
+
+div.card.display .hide {
+	-webkit-transform: opacity(0.0);
+}
+
+div.card.edit .contents {
 	padding: 3mm;
 	-webkit-transform: scale(.65);
 	-moz-transform: scale(.65);
@@ -90,8 +82,8 @@ div.card.edit .contents {
 	transform: scale(.65);
 }
 
-div.card.edit.show .contents {
-	z-index: 1000;
+div.edit.show .contents {
+	z-index: 500;
 }
 div.card.edit.scale .contents {
 	-webkit-transform: scale(1.0);
@@ -100,22 +92,32 @@ div.card.edit.scale .contents {
 	transform: scale(1.0);
 }
 
-div.card.edit label {
+div.edit label {
 	width: 100px;
 }
 
-div.card.edit .input {
+div.edit .input {
 	margin-left: 110px;
 }
 
 
-div.card.edit .toolbar {
+div.edit .toolbar {
 	position: absolute;
 	bottom: 10px
 }
 
-div.card.display:hover .contents {
-	box-shadow:	0px 0px 6px #933;
+div.edit input[type="checkbox"], div.edit input[type="radio"] {
+	width: 14px;
+	height: 14px;
+	margin: 5px 0;
+}
+
+div.card.editable:hover .contents {
+	box-shadow:	0px 0px 6px #f8c466;
+}
+
+.drophover .contents {
+	box-shadow:	0px 0px 18px #f8c466 !important;
 }
 
 div.card .contents.action {
@@ -155,11 +157,11 @@ div.card .contents.reaction {
 	background-image: -ms-linear-gradient(bottom, rgb(115,115,0) 9%, rgb(199,199,10) 41%);
 }
 
-div.card .contents h2 {
+div.card .contents .title {
 	position: absolute;
 	top: 0.7mm;
 	left: 4.5mm;
-	width: 50mm;
+	width: 46mm;
 	height: 8mm;
 	display: block;
 	padding: 0mm;
@@ -175,11 +177,10 @@ div.card .contents h2 {
 	background-image: -moz-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
 	background-image: -webkit-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
 	background-image: -ms-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
-
 }
 
 div.card .contents .cardtext {
-	height: 66mm;
+	height: 62mm;
 	width: auto;
 	border-radius: 3mm;
 	border: 0.75mm solid black;
@@ -192,33 +193,6 @@ div.card .contents .cardtext .description {
 	font-style: italic;
 	height: 10mm;
 }
-
-div.card .contents .cardtext .description p {
-	font-style: italic;
-}
-
-div.card .contents .cardtext ul.text-list {
-	list-style: none;
-	font-size: 9pt;
-}
-
-div.card .contents .cardtext ul.text-list li {
-	margin-top: 2mm;
-}
-
-div.card .contents .cardtext .text-list li .label {
-	font-weight: bold;
-	display: inline;
-	margin: 0mm;
-	padding: 0mm;
-}
-
-div.card .contents .cardtext .text-list li .text {
-	display: inline;
-	margin: 0mm;
-	padding: 0mm;
-}
-
 
 div.card .contents ul.icons {
 	bottom: -1.5mm;
@@ -280,15 +254,102 @@ div.card .icons.right li.phase.enabled {
 	color: black;	
 }
 
-/*
-div.card input, div.card textarea {
-	width: 50mm;
+div.deck {
+	/*font-family: 'Expletus Sans', sans-serif;*/
+	font-size: 12pt;
+	height: 44mm;
+	width: 36.5mm;
+	position: relative;
+	float:left;
+	page-break-inside: avoid;
 }
 
-div.card h2 input {
-	width: 40mm
+div.deck .contents {
+	position: absolute;
+	margin: 2mm 2mm 2mm;
+	border-radius: 1.5mm;
+	border: 0.5mm solid black;
+	box-shadow:	2px 2px 5px #333;
+	-webkit-transition: all .15s ease-out;
+	-moz-transition: all .15s ease-out;
+	-ms-transition: all .15s ease-out;
+	transition: all .15s ease-out;
+	background-image: url("/static/d12/media/pineapplecut.png");
 }
-*/
+
+
+div.deck.display .contents {
+	height: 42mm;
+	width: 29.5mm;
+}
+
+div.deck.edit .contents {
+	height: 48mm;
+	width: 88.5mm;
+	top: -2mm;
+	left: -26mm;
+	background: white;
+}
+
+div.deck.edit .contents {
+	padding: 3mm;
+	-webkit-transform: scale(.8);
+	-moz-transform: scale(.8);
+	-ms-transform: scale(.8);
+	transform: scale(.8);
+}
+
+div.deck.edit.scale .contents {
+	-webkit-transform: scale(1.0);
+	-moz-transform: scale(1.0);
+	-ms-transform: scale(1.0);
+	transform: scale(1.0);
+}
+
+div.deck .contents .title {
+	position: absolute;
+	top: 31mm;
+	left: 2mm;
+	width: 25mm;
+	height: 6mm;
+	text-align: center;
+	font-size: 8pt;
+	font-style: italic;
+	color: #666;
+}
+
+div.deck .number-of-cards {
+	position: absolute;
+	top: 17mm;
+	width: 100%;
+	font-size: 17mm;
+	text-align: center;
+	opacity: 0.2;
+}
+
+div.relative {
+	position: relative;
+}
+
+div.fixed {
+	position: fixed;
+}
+
+div.card textarea {
+	height: 40mm;
+}
+div.sidebar {
+	width: 88px;
+}
+div.trash {
+	width: 84px;
+	height: 84px;
+	background-image: url("/static/d12/media/trash.png");
+}
+
+div.trash.drophover {
+	background-image: url("/static/d12/media/trash_glow.png") !important;
+}
 
 div.login {
 	margin-top:80px;
@@ -297,4 +358,5 @@ div.login {
 /* iPhone [portrait + landscape] */
 @media only screen and (max-device-width: 480px) {
 	.topbar { position: absolute !important; }
+	.fixed {position: inherit !important;}
 }

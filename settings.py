@@ -121,7 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
 	'south',
 	'cards',
-	'djangbone',
+	'djangorestframework',
 )
 
 LOGIN_URL = "/login/"

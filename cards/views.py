@@ -1,77 +1,41 @@
 # -*- coding: utf-8 -*-
 
 # Django imports
-from djangbone.views import BackboneAPIView
+from djangorestframework.authentication import UserLoggedInAuthentication
+from djangorestframework.mixins import AuthMixin
+from djangorestframework.views import InstanceModelView
 from django.views.generic import TemplateView
-from django import forms
 
 # App imports
-import models
-
-class AddCardForm(forms.ModelForm):
-	class Meta:
-		model = models.Card
-
-class EditCardForm(forms.ModelForm):
-	class Meta:
-		model = models.Card
-
-class CardView(BackboneAPIView):
-	base_queryset = models.Card.objects.all()
-	add_form_class = AddCardForm
-	edit_form_class = EditCardForm
-	serialize_fields = ("id", "title", "description", "body", "type", "phase_1", "phase_2", "phase_3")
-
-	def get_collection(self, request, *args, **kwargs):
-		deck = request.GET.get("deck")
-		if deck:
-			self.base_queryset = self.base_queryset.filter(card_in_decks__deck_id = deck)
-		return super(CardView, self).get_collection(request, *args, **kwargs)
+from cards.resources import CardResource, CardInDeckResource, DeckResource
+from foundation.views import QueryListOrCreateView
 
 
-class AddDeckForm(forms.ModelForm):
-	class Meta:
-		model = models.Deck
+class CardListView(QueryListOrCreateView):
+	authentication = (UserLoggedInAuthentication, )
+	query_params = ("decks",)
+	resource = CardResource
 
-class EditDeckForm(forms.ModelForm):
-	class Meta:
-		model = models.Deck
+class CardInstanceView(InstanceModelView):
+	authentication = (UserLoggedInAuthentication, )
+	resource = CardResource
 
-class DeckView(BackboneAPIView):
-	base_queryset = models.Deck.objects.all()
-	add_form_class = AddDeckForm
-	edit_form_class = EditDeckForm
-	serialize_fields = ("id", "title", "description", "user")
+class DeckListView(QueryListOrCreateView):
+	authentication = (UserLoggedInAuthentication, )
+	resource = DeckResource
 
-	def get_collection(self, request, *args, **kwargs):
-		user = request.GET.get("user", None)
-		if user is not None:
-			self.base_queryset = self.base_queryset.filter(user_id = user)
-		return super(DeckView, self).get_collection(request, *args, **kwargs)
+class DeckInstanceView(InstanceModelView):
+	authentication = (UserLoggedInAuthentication, )
+	resource = DeckResource
 
+class CardInDeckListView(QueryListOrCreateView):
+	authentication = (UserLoggedInAuthentication, )
+	query_params = ("card", "deck")
+	resource = CardInDeckResource
 
-class AddCardInDeckForm(forms.ModelForm):
-	class Meta:
-		model = models.CardInDeck
-
-class EditCardInDeckForm(forms.ModelForm):
-	class Meta:
-		model = models.CardInDeck
-
-class CardInDeckView(BackboneAPIView):
-	base_queryset = models.CardInDeck.objects.all()
-	add_form_class = AddCardInDeckForm
-	edit_form_class = EditCardInDeckForm
-	serialize_fields = ("id", "card", "deck")
-
-	def get_collection(self, request, *args, **kwargs):
-		card = request.GET.get("card", None)
-		deck = request.GET.get("deck", None)
-		if card is not None:
-			self.base_queryset = self.base_queryset.filter(card = card)
-		if deck is not None:
-			self.base_queryset = self.base_queryset.filter(deck = deck)
-		return super(DeckView, self).get_collection(request, *args, **kwargs)
+class CardInDeckInstanceView(InstanceModelView):
+	authentication = (UserLoggedInAuthentication, )
+	resource = CardInDeckResource
 
 
 class IndexView(TemplateView):
