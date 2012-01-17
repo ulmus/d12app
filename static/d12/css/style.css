@@ -163,6 +163,8 @@ div.card .contents.reaction {
 }
 
 div.card .contents .title {
+	font-family: "Signika" sans-serif;
+	font-weight: 600;
 	position: absolute;
 	top: 0.7mm;
 	left: 4.5mm;
@@ -175,7 +177,7 @@ div.card .contents .title {
 	border: 0.75mm solid black;
 	background-color: whitesmoke;
 	text-align: center;
-	font-size: 12pt;
+	font-size: 4.5mm;
 	line-height: 8.5mm;
 	background-image: linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
 	background-image: -o-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
@@ -185,6 +187,7 @@ div.card .contents .title {
 }
 
 div.card .contents .cardtext {
+	font-family: "Signika" sans-serif;
 	height: 62mm;
 	width: auto;
 	border-radius: 3mm;
