@@ -318,7 +318,7 @@
         return _this.$(".edit").addClass("scale");
       }, 0);
       return setTimeout(function() {
-        return _this.$('.edit form :input').eq(1).focus().select();
+        return _this.$('.edit form :input').eq(0).focus().select();
       }, 150);
     };
 
@@ -372,6 +372,9 @@
     __extends(CollectionView, _super);
 
     function CollectionView() {
+      this.showAll = __bind(this.showAll, this);
+      this.hideSome = __bind(this.hideSome, this);
+      this.getModelView = __bind(this.getModelView, this);
       this.removeModel = __bind(this.removeModel, this);
       this.removeModelView = __bind(this.removeModelView, this);
       this.addModel = __bind(this.addModel, this);
@@ -494,6 +497,44 @@
       return this.render();
     };
 
+    CollectionView.prototype.getModelView = function(model) {
+      var view;
+      view = this.modelViews[model.cid];
+      if (view) {
+        return view;
+      } else {
+        return console && console.log("CollectionViewError: ModelView not found for ", model);
+      }
+    };
+
+    CollectionView.prototype.hideSome = function(hideFn) {
+      var model, models, view, _i, _len, _results;
+      models = this.getModels();
+      _results = [];
+      for (_i = 0, _len = models.length; _i < _len; _i++) {
+        model = models[_i];
+        view = this.getModelView(model);
+        if (hideFn(model)) {
+          _results.push($(view.el).hide());
+        } else {
+          _results.push($(view.el).show());
+        }
+      }
+      return _results;
+    };
+
+    CollectionView.prototype.showAll = function() {
+      var model, models, view, _i, _len, _results;
+      models = this.getModels();
+      _results = [];
+      for (_i = 0, _len = models.length; _i < _len; _i++) {
+        model = models[_i];
+        view = this.getModelView(model);
+        _results.push($(view.el).show());
+      }
+      return _results;
+    };
+
     return CollectionView;
 
   })(Backbone.View);
@@ -507,7 +548,6 @@
       this.getModels = __bind(this.getModels, this);
       this.setFilter = __bind(this.setFilter, this);
       this.initialize = __bind(this.initialize, this);
-      this.filter = __bind(this.filter, this);
       FilteredCollectionView.__super__.constructor.apply(this, arguments);
     }
 
@@ -531,7 +571,7 @@
 
     FilteredCollectionView.prototype.addModel = function(model) {
       if (this.filter(model)) {
-        return FilteredCollectionView.__super__.addModel.call(this);
+        return FilteredCollectionView.__super__.addModel.call(this, model);
       }
     };
 

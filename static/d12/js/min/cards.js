@@ -447,17 +447,12 @@
     function ShowCardsMenuView() {
       this.remove = __bind(this.remove, this);
       this.updateHeader = __bind(this.updateHeader, this);
-      this.showMenu = __bind(this.showMenu, this);
       this.render = __bind(this.render, this);
       this.initialize = __bind(this.initialize, this);
       ShowCardsMenuView.__super__.constructor.apply(this, arguments);
     }
 
-    ShowCardsMenuView.prototype.events = {
-      "click .show-menu-item": "showMenu"
-    };
-
-    ShowCardsMenuView.itemTemplate = Handlebars.compile("<li><a class='show-menu-item' href='#' data-model-id='{{model.id}}'>{{attr.title}}</a></li>");
+    ShowCardsMenuView.itemTemplate = Handlebars.compile("<li><a class='show-menu-item' href='#cards/deck/{{ model.id }}' data-model-id='{{model.id}}'>{{attr.title}}</a></li>");
 
     ShowCardsMenuView.prototype.shownId = 0;
 
@@ -472,7 +467,7 @@
 
     ShowCardsMenuView.prototype.render = function() {
       var html, model, _i, _len, _ref;
-      html = "<li><a class='show-menu-item' href='#' data-model-id='-1'>All cards</a></li>";
+      html = "<li><a class='show-menu-item' href='#cards/all' data-model-id='-1'>All cards</a></li>";
       _ref = this.collection.models;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         model = _ref[_i];
@@ -482,24 +477,6 @@
         });
       }
       $(this.el).html(html);
-      return this.updateHeader();
-    };
-
-    ShowCardsMenuView.prototype.showMenu = function(event) {
-      var intId, modelId;
-      modelId = $(event.target).data("modelId");
-      this.shownId = modelId;
-      if (modelId > 0) {
-        intId = parseInt(modelId);
-        $(App.allCardsView.el).hide();
-        App.cardSheetView.setFilter(function(model) {
-          return model.get("deck") === intId;
-        });
-        $(App.cardSheetView.el).show();
-      } else {
-        $(App.cardSheetView.el).hide();
-        $(App.allCardsView.el).show();
-      }
       return this.updateHeader();
     };
 
@@ -524,15 +501,79 @@
 
   })(Backbone.View);
 
+  Cards.SearchBoxView = (function(_super) {
+
+    __extends(SearchBoxView, _super);
+
+    function SearchBoxView() {
+      this.doSearch = __bind(this.doSearch, this);
+      this.setSearch = __bind(this.setSearch, this);
+      this.clear = __bind(this.clear, this);
+      SearchBoxView.__super__.constructor.apply(this, arguments);
+    }
+
+    SearchBoxView.prototype.events = {
+      "keyup input": "doSearch"
+    };
+
+    SearchBoxView.prototype.clear = function() {
+      return this.setSearch("");
+    };
+
+    SearchBoxView.prototype.setSearch = function(term) {
+      this.$("input").val(term);
+      return this.doSearch();
+    };
+
+    SearchBoxView.prototype.doSearch = function(event) {
+      var term;
+      term = this.$("input").val();
+      if (term === "") {
+        return App.shownView.showAll();
+      } else {
+        term = term.toUpperCase();
+        if (App.shownView === App.allCardsView) {
+          App.shownView.hideSome(function(model) {
+            var title;
+            title = model.get("title");
+            title = title.toUpperCase();
+            return title.indexOf(term);
+          });
+        }
+        if (App.shownView === App.cardSheetView) {
+          return App.shownView.hideSome(function(model) {
+            var title;
+            title = model.getCard().get("title");
+            title = title.toUpperCase();
+            return title.indexOf(term);
+          });
+        }
+      }
+    };
+
+    return SearchBoxView;
+
+  })(Backbone.View);
+
   Cards.D12Router = (function(_super) {
+    var shownView;
 
     __extends(D12Router, _super);
 
     function D12Router() {
       this.showError = __bind(this.showError, this);
+      this.showCardSheet = __bind(this.showCardSheet, this);
+      this.showAllCards = __bind(this.showAllCards, this);
       this.initialize = __bind(this.initialize, this);
       D12Router.__super__.constructor.apply(this, arguments);
     }
+
+    D12Router.prototype.routes = {
+      "cards/all": "showAllCards",
+      "cards/deck/:deck": "showCardSheet"
+    };
+
+    shownView = null;
 
     D12Router.prototype.initialize = function() {
       var _this = this;
@@ -573,6 +614,7 @@
       });
       this.trashView.render();
       $("#cards-addCard").click(function() {
+        _this.showAllCards();
         return _this.allCards.create();
       });
       $("#cards-addDeck").click(function() {
@@ -585,7 +627,33 @@
         _this.decks.fetch();
         return _this.cardsInDeck.fetch();
       });
+      this.searchView = new Cards.SearchBoxView({
+        el: $("#cards-searchBox")
+      });
+      this.shownView = this.allCardsView;
       return D12Router.__super__.initialize.call(this);
+    };
+
+    D12Router.prototype.showAllCards = function() {
+      $(this.cardSheetView.el).hide();
+      $(this.allCardsView.el).show();
+      this.shownView = this.allCardsView;
+      $("#cards-header").text("All cards");
+      return this.searchView.clear();
+    };
+
+    D12Router.prototype.showCardSheet = function(deck) {
+      var intId;
+      intId = parseInt(deck);
+      $(this.allCardsView.el).hide();
+      this.cardSheetView.setFilter(function(model) {
+        return model.get("deck") === intId;
+      });
+      this.cardSheetView.render();
+      $(this.cardSheetView.el).show();
+      this.shownView = this.cardSheetView;
+      $("#cards-header").text(this.decks.get(intId).get("title"));
+      return this.searchView.clear();
     };
 
     D12Router.prototype.showError = function(errorData) {
@@ -599,7 +667,8 @@
   })(Backbone.Router);
 
   window.Foundation.inits.push(function() {
-    return window.App = new Cards.D12Router();
+    window.App = new Cards.D12Router();
+    return window.location.hash = "";
   });
 
 }).call(this);

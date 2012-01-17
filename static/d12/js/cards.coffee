@@ -275,10 +275,7 @@ class Cards.TrashView extends Backbone.View
 
 class Cards.ShowCardsMenuView extends Backbone.View
 
-	events:
-		"click .show-menu-item":	"showMenu"
-
-	@itemTemplate: Handlebars.compile("<li><a class='show-menu-item' href='#' data-model-id='{{model.id}}'>{{attr.title}}</a></li>")
+	@itemTemplate: Handlebars.compile("<li><a class='show-menu-item' href='#cards/deck/{{ model.id }}' data-model-id='{{model.id}}'>{{attr.title}}</a></li>")
 
 	shownId: 0
 
@@ -291,7 +288,7 @@ class Cards.ShowCardsMenuView extends Backbone.View
 		@collection.bind("change", @render, @)
 
 	render: =>
-		html = "<li><a class='show-menu-item' href='#' data-model-id='-1'>All cards</a></li>"
+		html = "<li><a class='show-menu-item' href='#cards/all' data-model-id='-1'>All cards</a></li>"
 		for model in @collection.models
 			html += @constructor.itemTemplate(
 				attr: model.toJSON(),
@@ -300,18 +297,6 @@ class Cards.ShowCardsMenuView extends Backbone.View
 		$(@el).html(html)
 		@updateHeader()
 
-	showMenu: (event) =>
-		modelId = $(event.target).data("modelId")
-		@shownId = modelId
-		if modelId > 0
-			intId = parseInt(modelId)
-			$(App.allCardsView.el).hide()
-			App.cardSheetView.setFilter((model) -> return model.get("deck") == intId)
-			$(App.cardSheetView.el).show()
-		else
-			$(App.cardSheetView.el).hide()
-			$(App.allCardsView.el).show()
-		@updateHeader()
 
 	updateHeader: =>
 		if @shownId > 0
@@ -327,9 +312,46 @@ class Cards.ShowCardsMenuView extends Backbone.View
 		@collection.unbind("change", @render)
 
 
+class Cards.SearchBoxView extends Backbone.View
+
+	events:
+		"keyup input":		"doSearch"
+
+	clear: =>
+		@setSearch("")
+
+	setSearch: (term) =>
+		@$("input").val(term)
+		@doSearch()
+
+	doSearch: (event) =>
+		term = @$("input").val()
+		if term == ""
+			App.shownView.showAll()
+		else
+			term = term.toUpperCase()
+			if App.shownView == App.allCardsView
+				App.shownView.hideSome((model)->
+					title = model.get("title")
+					title = title.toUpperCase()
+					title.indexOf(term)
+				)
+			if App.shownView == App.cardSheetView
+				App.shownView.hideSome((model)->
+					title = model.getCard().get("title")
+					title = title.toUpperCase()
+					title.indexOf(term)
+				)
+
 # Router
 
 class Cards.D12Router extends Backbone.Router
+
+	routes:
+		"cards/all" :			"showAllCards"
+		"cards/deck/:deck" :	"showCardSheet"
+
+	shownView = null
 
 	initialize: =>
 		# General bindings
@@ -378,6 +400,7 @@ class Cards.D12Router extends Backbone.Router
 
 		# Navigation bar
 		$("#cards-addCard").click(=>
+			@showAllCards()
 			@allCards.create()
 		)
 
@@ -392,7 +415,31 @@ class Cards.D12Router extends Backbone.Router
 			@cardsInDeck.fetch()
 		)
 
+		# Search View
+
+		@searchView = new Cards.SearchBoxView({
+			el: $("#cards-searchBox")
+		})
+
+		@shownView = @allCardsView
 		super()
+
+	showAllCards: =>
+		$(@cardSheetView.el).hide()
+		$(@allCardsView.el).show()
+		@shownView = @allCardsView
+		$("#cards-header").text("All cards")
+		@searchView.clear()
+
+	showCardSheet: (deck) =>
+		intId = parseInt(deck)
+		$(@allCardsView.el).hide()
+		@cardSheetView.setFilter((model) -> return model.get("deck") == intId)
+		@cardSheetView.render()
+		$(@cardSheetView.el).show()
+		@shownView = @cardSheetView
+		$("#cards-header").text(@decks.get(intId).get("title"))
+		@searchView.clear()
 
 	showError: (errorData) =>
 		$("<div>#{errorData.error}<p><button class='btn cancel'>Ok</button></p></div>").modal(
@@ -403,4 +450,5 @@ class Cards.D12Router extends Backbone.Router
 # Initialization
 window.Foundation.inits.push(->
 	window.App = new Cards.D12Router()
+	window.location.hash=""
 )

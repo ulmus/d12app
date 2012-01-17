@@ -190,7 +190,7 @@ class Foundation.EditableTemplateView extends Foundation.TemplateView
 			@.$(".edit").addClass("scale")
 		,0)
 		setTimeout(=>
-			@.$('.edit form :input').eq(1).focus().select()
+			@.$('.edit form :input').eq(0).focus().select()
 		,150)
 
 	showDisplay: =>
@@ -309,10 +309,33 @@ class Foundation.CollectionView extends Backbone.View
 		@removeModelView(model)
 		@render()
 
+	getModelView: (model) =>
+		view = @modelViews[model.cid]
+		if view
+			return view
+		else
+		 	console and console.log("CollectionViewError: ModelView not found for ", model)
+
+
+	hideSome: (hideFn) =>
+		models = @getModels()
+		for model in models
+			view = @getModelView(model)
+			if hideFn(model)
+				$(view.el).hide()
+			else
+				$(view.el).show()
+
+	showAll: =>
+		models = @getModels()
+		for model in models
+			view = @getModelView(model)
+			$(view.el).show()
+
 	
 class Foundation.FilteredCollectionView extends Foundation.CollectionView
 	
-	filter: (model) =>
+	filter: (model) ->
 		return true
 	
 	initialize: =>
@@ -326,10 +349,10 @@ class Foundation.FilteredCollectionView extends Foundation.CollectionView
 
 	getModels: =>
 		return @collection.filter(@filter)
-			
+
 	addModel: (model) =>
 		if @filter(model)
-			super()
+			super(model)
 			
 # Backbone.sync
 

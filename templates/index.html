@@ -178,6 +178,9 @@
 				</ul>
 			</li>
           </ul>
+		  <form class="pull-left" onsubmit="return false" id="cards-searchBox">
+		    <input type="text" placeholder="Search">
+		  </form>
           <ul class="secondary-nav">
 			{% if user.is_staff %}
             <li class=""><a id="cards-admin" href="/admin/"><span class="websymbol">S</span> Admin</a></li>

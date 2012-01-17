@@ -186,11 +186,22 @@ div.card .contents .cardtext {
 	background-color: white;
 	margin: 3mm 1mm 1mm;
 	padding: 8mm 2mm 4mm;
+	font-size: 9px;
 }
 
-div.card .contents .cardtext .description {
+div.card.display .contents p {
+	font-size: 11px;
+	line-height: 13px;
+	margin-bottom: 7px;
+}
+
+div.card .contents .description {
 	font-style: italic;
 	height: 10mm;
+}
+
+div.card .contents .description p {
+	font-style: italic;
 }
 
 div.card .contents ul.icons {
