@@ -15,6 +15,7 @@ class Cards.Card extends Foundation.Model
 	rootUrl: baseUrl + "card/"
 	
 	defaults:
+		category		: "BASC"
 		title			: ""
 		type			: "ACTN"
 		body			: ""

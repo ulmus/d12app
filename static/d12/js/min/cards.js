@@ -22,6 +22,7 @@
     Card.prototype.rootUrl = baseUrl + "card/";
 
     Card.prototype.defaults = {
+      category: "BASC",
       title: "",
       type: "ACTN",
       body: "",
