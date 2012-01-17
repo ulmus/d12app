@@ -57,6 +57,7 @@ div.card.display .contents {
 	left: 2mm;
 	height: 80mm;
 	width: 56mm;
+	font-family: "Signika", sans-serif;
 }
 
 div.card.edit .contents {
@@ -187,7 +188,7 @@ div.card .contents .title {
 }
 
 div.card .contents .cardtext {
-	font-family: "Signika" sans-serif;
+	font-family: "Signika", sans-serif;
 	height: 62mm;
 	width: auto;
 	border-radius: 3mm;
@@ -228,8 +229,9 @@ div.card .contents .icons li {
 	border: 0.5mm solid black;
 	margin: 1mm;
 	background-color: white;
-	font-weight: bold;
+	font-weight: 600;
 	font-size: 12px;
+	font-family: "Signika", sans-serif;
 	color: #333;
 }
 
