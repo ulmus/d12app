@@ -26,13 +26,31 @@
   Handlebars.registerHelper("cardActionClassName", function(abbr) {
     switch (abbr) {
       case "ACTN":
-        return "action";
+        return "main";
       case "MOVE":
-        return "move";
+        return "positioning";
       case "SPRT":
         return "support";
       case "REAC":
         return "reaction";
+    }
+  });
+
+  Handlebars.registerHelper("cardCategoryDisplay", function(abbr) {
+    switch (abbr) {
+      case "BASC":
+        return "Basic";
+      case "ADVN":
+        return "Advanced";
+    }
+  });
+
+  Handlebars.registerHelper("cardCategoryDisplaySymbol", function(abbr) {
+    switch (abbr) {
+      case "BASC":
+        return "N";
+      case "ADVN":
+        return "O";
     }
   });
 

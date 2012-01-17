@@ -3,6 +3,11 @@ from django.db import models
 from django.contrib.auth.models import User
 from foundation import fields
 
+CARD_CATEGORY_CHOICES = (
+	("BASC", "Basic"),
+	("ADVN", "Advanced"),
+)
+
 CARD_TYPE_CHOICES = (
 	("ACTN", "Action"),
 	("MOVE", "Move"),
@@ -12,7 +17,7 @@ CARD_TYPE_CHOICES = (
 
 class Card(models.Model):
 	title = models.CharField(max_length=80, blank=True, null=True)
-	description = models.TextField(blank=True, null=True)
+	category = models.CharField(max_length=4, choices=CARD_CATEGORY_CHOICES, default="BASC")
 	body = models.TextField(blank=True, null=True)
 	keywords = fields.JSONField(blank=True, null=True)
 	type = models.CharField(max_length=4, choices=CARD_TYPE_CHOICES, default="ACTN")

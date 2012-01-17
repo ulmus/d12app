@@ -16,10 +16,22 @@ Handlebars.registerHelper("cardActionDisplay", (abbr) ->
 
 Handlebars.registerHelper("cardActionClassName", (abbr) ->
 	switch abbr
-		when "ACTN" then "action"
-		when "MOVE" then "move"
+		when "ACTN" then "main"
+		when "MOVE" then "positioning"
 		when "SPRT" then "support"
 		when "REAC" then "reaction"
+)
+
+Handlebars.registerHelper("cardCategoryDisplay", (abbr) ->
+	switch abbr
+		when "BASC" then "Basic"
+		when "ADVN" then "Advanced"
+)
+
+Handlebars.registerHelper("cardCategoryDisplaySymbol", (abbr) ->
+	switch abbr
+		when "BASC" then "N"
+		when "ADVN" then "O"
 )
 
 Handlebars.registerHelper("markdown", (markdownText) ->

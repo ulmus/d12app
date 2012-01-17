@@ -15,7 +15,7 @@ class CardResource(ModelResource):
 	fields = (
 		"id",
 		"title",
-		"description",
+		"category",
 		"body",
 		"type",
 		"keywords",

@@ -22,7 +22,6 @@
     Card.prototype.rootUrl = baseUrl + "card/";
 
     Card.prototype.defaults = {
-      description: "",
       title: "",
       type: "ACTN",
       body: "",
@@ -34,9 +33,18 @@
         type: "Text",
         title: "Title"
       },
-      description: {
-        type: "Text",
-        title: "Description"
+      category: {
+        type: "Select",
+        title: "Card Category",
+        options: [
+          {
+            val: "BASC",
+            label: "Basic"
+          }, {
+            val: "ADVN",
+            label: "Advanced"
+          }
+        ]
       },
       body: {
         type: "TextArea",

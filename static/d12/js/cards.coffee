@@ -15,7 +15,6 @@ class Cards.Card extends Foundation.Model
 	rootUrl: baseUrl + "card/"
 	
 	defaults:
-		description		: ""
 		title			: ""
 		type			: "ACTN"
 		body			: ""
@@ -25,10 +24,14 @@ class Cards.Card extends Foundation.Model
 		title:
 			type: "Text"
 			title: "Title"
-		description:
-			type: "Text"
-			title: "Description"
-		body: 
+		category:
+			type: "Select"
+			title: "Card Category"
+			options: [
+				{val: "BASC", label: "Basic"},
+				{val: "ADVN", label: "Advanced"},
+			]
+		body:
 			type: "TextArea"
 			title: "Card Text"
 		type:

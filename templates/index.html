@@ -36,10 +36,8 @@
 			<h2 class="title">
 				{{attr.title}}
 			</h2>
+			{{#if attr.protected }}<div class="noprint lock websymbol">x</div>{{/if }}
 			<div class="cardtext">
-				<div class="description">
-						<p>{{attr.description}}<p>
-				</div>
 				<div class="body">
 					{{{markdown attr.body}}}
 				</div>
@@ -48,7 +46,7 @@
 				<li class="action-type">{{cardActionDisplay attr.type}}</li>
 			</ul>
 			<ul class="icons right">
-				{{#if attr.protected }}<li class="noprint"><span class="websymbol">x</span></li>{{/if }}
+				<li><span class="websymbol">{{cardCategoryDisplaySymbol attr.category}}</span></li>
 			</ul>
 		</div>
 	</div>
@@ -72,8 +70,8 @@
 					{{card.attributes.title}}
 				</h2>
 				<div class="cardtext">
-					<div class="description">
-							<p>{{card.attributes.description}}<p>
+					<div class="category">
+							{{cardCategoryDisplay attr.category}}
 					</div>
 					<div class="body">
 						{{{markdown card.attributes.body}}}
@@ -83,6 +81,7 @@
 					<li class="action-type">{{cardActionDisplay card.attributes.type}}</li>
 				</ul>
 				<ul class="icons right">
+					<li><span class="websymbol">{{cardCategoryDisplaySymbol attr.category}}</span></li>
 				</ul>
 			</div>
 		</div>
