@@ -97,7 +97,7 @@
     CardCollection.prototype.rootUrl = baseUrl + "card/";
 
     CardCollection.prototype.comparator = function(model) {
-      return model.get("title");
+      return model.get("category") + model.get("type") + model.get("title");
     };
 
     return CardCollection;

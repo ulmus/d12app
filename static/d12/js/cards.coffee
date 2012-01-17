@@ -58,7 +58,7 @@ class Cards.CardCollection extends Foundation.Collection
 	rootUrl: baseUrl + "card/"
 
 	comparator: (model) ->
-		return model.get("title")
+		return model.get("category") + model.get("type") + model.get("title")
 
 
 class Cards.Deck extends Foundation.Model
