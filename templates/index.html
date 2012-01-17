@@ -27,6 +27,7 @@
 	<script src="/static/lib/bootstrap/js/bootstrap-twipsy.js"></script>
 	<script src="/static/lib/bootstrap/js/bootstrap-popover.js"></script>
 	<script src="/static/lib/bootstrap/js/bootstrap-tabs.js"></script>
+	<script src="/static/lib/js/uuid.js"></script>
 
 	<!-- Templates -->
 	{% verbatim %}
@@ -157,6 +158,7 @@
 		currentUserIsAdmin = {% if user.is_staff %}true{% else %}false{% endif %};
 	</script>
 	<script src="/static/d12/js/min/foundation.js"></script>
+	<script src="/static/d12/js/min/printouts.js"></script>
 	<script src="/static/d12/js/min/cards.js"></script>
 	
 </head>
@@ -170,6 +172,7 @@
             <li class=""><a id="cards-addCard" href="#"><span class="websymbol">+</span> Add card</a></li>
 		    <li class=""><a id="cards-addDeck" href="#"><span class="websymbol">+</span> Add deck</a></li>
             <li class=""><a id="cards-refreshCards" href="#"><span class="websymbol">V</span> Refresh</a></li>
+	        <li class=""><a id="cards-printout" href="#"><span class="websymbol">a</span> Pdf</a></li>
 			<li class="dropdown" data-dropdown="dropdown">
 				<a href="#" class="dropdown-toggle">Show</a>
 				<ul class="dropdown-menu" id="cards-showMenu">

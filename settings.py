@@ -121,6 +121,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
 	'south',
 	'cards',
+	'export',
 	'djangorestframework',
 )
 
@@ -147,5 +148,12 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+    }
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': BASE_PATH + '/../django_cache',
     }
 }

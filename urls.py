@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^$', login_required(IndexView.as_view()), name='index'),
     url(r'^api/cards/', include('cards.urls')),
+	url(r'^api/export/', include('export.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

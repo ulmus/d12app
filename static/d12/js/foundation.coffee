@@ -91,6 +91,8 @@ class Foundation.Model extends Backbone.Model
 
 	_params: {}
 
+	@readonly: []
+
 	queryParams: =>
 		return @_params
 
@@ -101,6 +103,12 @@ class Foundation.Model extends Backbone.Model
 		attr = _(@attributes).clone()
 		delete attr.id
 		attr
+
+	url: =>
+		if @isNew()
+			return @rootUrl
+		else
+			return @rootUrl + "/#{@id}"
 
 #  Form Fields
 

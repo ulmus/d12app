@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>PDFObject example</title>
+    <script type="text/javascript" src="/static/Lib/js/pdfobject.js"></script>
+    <script type="text/javascript">
+		function printDocument(name) {
+
+			//Wait until PDF is ready to print
+			if (typeof document.getElementsByName(name).print == 'undefined') {
+
+				setTimeout(function(){printDocument(name);}, 1000);
+
+			} else {
+
+				var x = document.getElementsByName(name);
+				x.print();
+			}
+		}
+
+      window.onload = function (){
+        var pdf = new PDFObject({
+			url: "/api/v2/export/pdf/{{ uuid }}/",
+			pdfOpenParams: { view: 'FitH' }
+		}).embed();
+		if (pdf){
+			//printDocument("plugin");
+			print();
+		}
+      };
+    </script>
+  </head> 
+  <body>
+    <div id="printout-div">Om ingen utskriftsmöjlighet dyker upp så kan du <a href="/api/v2/export/pdf/{{ uuid }}/">klicka här för att ladda ner en pdf</a>.</div>
+  </body>
+</html>

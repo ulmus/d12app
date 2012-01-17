@@ -573,6 +573,7 @@
       this.showError = __bind(this.showError, this);
       this.showCardSheet = __bind(this.showCardSheet, this);
       this.showAllCards = __bind(this.showAllCards, this);
+      this.printOut = __bind(this.printOut, this);
       this.initialize = __bind(this.initialize, this);
       D12Router.__super__.constructor.apply(this, arguments);
     }
@@ -636,11 +637,27 @@
         _this.decks.fetch();
         return _this.cardsInDeck.fetch();
       });
+      $("#cards-printout").click(function() {
+        return _this.printOut();
+      });
       this.searchView = new Cards.SearchBoxView({
         el: $("#cards-searchBox")
       });
       this.shownView = this.allCardsView;
       return D12Router.__super__.initialize.call(this);
+    };
+
+    D12Router.prototype.printOut = function() {
+      var printout,
+        _this = this;
+      printout = new Printouts.Printout({
+        body: $(this.shownView.el).html(),
+        title: "Cards",
+        filename: "cards.pdf"
+      });
+      return printout.save().then(function() {
+        return window.open("/api/export/pdf/" + (printout.get("uuid")) + "/", "_new");
+      });
     };
 
     D12Router.prototype.showAllCards = function() {

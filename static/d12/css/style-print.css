@@ -6,3 +6,6 @@ body {
 	padding: 0px;
 	margin: 0px;
 }
+div:nth-child(8n) .card {
+	page-break-after: always;
+}

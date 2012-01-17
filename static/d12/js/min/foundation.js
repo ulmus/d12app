@@ -135,6 +135,7 @@
     __extends(Model, _super);
 
     function Model() {
+      this.url = __bind(this.url, this);
       this.toJSON = __bind(this.toJSON, this);
       this.toString = __bind(this.toString, this);
       this.queryParams = __bind(this.queryParams, this);
@@ -142,6 +143,8 @@
     }
 
     Model.prototype._params = {};
+
+    Model.readonly = [];
 
     Model.prototype.queryParams = function() {
       return this._params;
@@ -156,6 +159,14 @@
       attr = _(this.attributes).clone();
       delete attr.id;
       return attr;
+    };
+
+    Model.prototype.url = function() {
+      if (this.isNew()) {
+        return this.rootUrl;
+      } else {
+        return this.rootUrl + ("/" + this.id);
+      }
     };
 
     return Model;

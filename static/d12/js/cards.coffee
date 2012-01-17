@@ -419,6 +419,10 @@ class Cards.D12Router extends Backbone.Router
 			@cardsInDeck.fetch()
 		)
 
+		$("#cards-printout").click(=>
+			@printOut()
+		)
+
 		# Search View
 
 		@searchView = new Cards.SearchBoxView({
@@ -427,6 +431,16 @@ class Cards.D12Router extends Backbone.Router
 
 		@shownView = @allCardsView
 		super()
+
+	printOut: =>
+		printout = new Printouts.Printout(
+			body: $(@shownView.el).html()
+			title: "Cards",
+			filename: "cards.pdf",
+		)
+		printout.save().then(=>
+			window.open("/api/export/pdf/#{printout.get("uuid")}/", "_new")
+		)
 
 	showAllCards: =>
 		$(@cardSheetView.el).hide()
