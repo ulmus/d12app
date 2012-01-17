@@ -165,7 +165,7 @@ div.card .contents.reaction {
 
 div.card .contents .title {
 	font-family: "Droid Sans", sans-serif;
-	font-weight: 600;
+	font-weight: bold;
 	position: absolute;
 	top: 0.7mm;
 	left: 4.5mm;
@@ -178,7 +178,7 @@ div.card .contents .title {
 	border: 0.75mm solid black;
 	background-color: whitesmoke;
 	text-align: center;
-	font-size: 4.5mm;
+	font-size: 4mm;
 	line-height: 8.5mm;
 	background-image: linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
 	background-image: -o-linear-gradient(bottom, rgb(212,210,212) 7%, rgb(242,242,242) 70%);
@@ -229,7 +229,6 @@ div.card .contents .icons li {
 	border: 0.5mm solid black;
 	margin: 1mm;
 	background-color: white;
-	font-weight: 600;
 	font-size: 12px;
 	font-family: "Droid Sans", sans-serif;
 	color: #333;

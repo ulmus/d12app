@@ -31,7 +31,7 @@ def printout_embed_view(request, uuid):
 def printout_html_view(request, uuid):
 	printout = get_object_or_404(Printout, uuid=uuid)
 
-	return HttpResponse(printout.get_html())
+	return HttpResponse(printout.get_html(path="/static/"))
 
 def header_view(request):
 	section = request.GET.get("section", "")

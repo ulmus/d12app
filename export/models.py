@@ -128,8 +128,8 @@ class Printout(models.Model):
 			log(0,OSError)
 			raise
 
-	def get_html(self):
-		return self.get_body_html(path= settings.BASE_PATH + "/static")
+	def get_html(self, path=settings.BASE_PATH + "/static"):
+		return self.get_body_html(path)
 
 	def can_create(self, user):
 		return True
