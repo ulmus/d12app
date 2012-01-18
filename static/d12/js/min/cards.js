@@ -331,9 +331,8 @@
     DeckView.prototype.render = function() {
       var _this = this;
       DeckView.__super__.render.call(this);
-      this.$(".deck").droppable({
+      this.$(".contents").droppable({
         tolerance: "pointer",
-        accept: ".card",
         hoverClass: 'drophover',
         drop: function(event, ui) {
           return _this.dropCard(event, ui);
@@ -388,7 +387,7 @@
     TrashView.prototype.render = function() {
       var _this = this;
       TrashView.__super__.render.call(this);
-      return this.$(".content").droppable({
+      return $(this.el).droppable({
         tolerance: "pointer",
         accept: ".card",
         hoverClass: 'drophover',

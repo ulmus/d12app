@@ -191,9 +191,9 @@ class Cards.DeckView extends Foundation.TemplateView
 
 	render: =>
 		super()
-		@$(".deck").droppable(
+		@$(".contents").droppable(
 			tolerance: "pointer"
-			accept: ".card"
+			# accept: ".card"
 			hoverClass: 'drophover'
 			drop: (event, ui) =>
 				@dropCard(event, ui)
@@ -226,7 +226,7 @@ class Cards.TrashView extends Backbone.View
 
 	render: =>
 		super()
-		@$(".content").droppable(
+		$(@el).droppable(
 			tolerance: "pointer"
 			accept: ".card",
 			hoverClass: 'drophover'
