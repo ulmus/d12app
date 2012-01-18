@@ -378,7 +378,7 @@ class Cards.DeckCollectionView extends Foundation.CollectionView
 	initialize: =>
 		@modelViewClass = Cards.DeckView
 		@headerView = new Foundation.StaticView(
-			className: "deck display clickable showAllCards"
+			className: "deck display clickable showAllCards noprint"
 			content:
 				'<div class="contents">
 					<div class="number-of-cards"></div>
@@ -441,6 +441,7 @@ class Cards.D12Router extends Backbone.Router
 		@allCardsView = new Foundation.CollectionView({
 			headerView: new Foundation.StaticView(
 				tagName: "h2"
+				className: "noprint"
 				content: "All Cards"
 			)
 			prependNew: true,

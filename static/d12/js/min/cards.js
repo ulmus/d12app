@@ -620,7 +620,7 @@
     DeckCollectionView.prototype.initialize = function() {
       this.modelViewClass = Cards.DeckView;
       this.headerView = new Foundation.StaticView({
-        className: "deck display clickable showAllCards",
+        className: "deck display clickable showAllCards noprint",
         content: '<div class="contents">\
 					<div class="number-of-cards"></div>\
 					<h2 class="title">\
@@ -698,6 +698,7 @@
       this.allCardsView = new Foundation.CollectionView({
         headerView: new Foundation.StaticView({
           tagName: "h2",
+          className: "noprint",
           content: "All Cards"
         }),
         prependNew: true,
