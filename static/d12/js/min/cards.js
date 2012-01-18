@@ -300,6 +300,7 @@
 
     function DeckView() {
       this.remove = __bind(this.remove, this);
+      this.showDeck = __bind(this.showDeck, this);
       this.updateNumberOfCards = __bind(this.updateNumberOfCards, this);
       this.dropCard = __bind(this.dropCard, this);
       this.render = __bind(this.render, this);
@@ -307,7 +308,18 @@
       DeckView.__super__.constructor.apply(this, arguments);
     }
 
-    DeckView.template = Foundation.getTemplate("tmplDeck");
+    DeckView.prototype.events = {
+      "click": "showDeck"
+    };
+
+    DeckView.template = Handlebars.compile('<div class="contents">\
+			<div class="number-of-cards"></div>\
+			<h2 class="title">\
+				{{attr.title}}\
+			</h2>\
+		</div>');
+
+    DeckView.prototype.className = "deck display clickable visual-drop-target showDeck";
 
     DeckView.prototype.initialize = function() {
       DeckView.__super__.initialize.call(this);
@@ -347,6 +359,10 @@
       return this.$(".number-of-cards").text(count);
     };
 
+    DeckView.prototype.showDeck = function() {
+      return App.navigate("cards/deck/" + this.model.id, true);
+    };
+
     DeckView.prototype.remove = function() {
       App.allCardsInDecks.unbind("reset", this.updateNumberOfCards);
       App.allCardsInDecks.unbind("add", this.updateNumberOfCards);
@@ -355,7 +371,7 @@
 
     return DeckView;
 
-  })(Foundation.EditableTemplateView);
+  })(Foundation.TemplateView);
 
   Cards.TrashView = (function(_super) {
 
@@ -455,7 +471,6 @@
 
     function ShowCardsMenuView() {
       this.remove = __bind(this.remove, this);
-      this.updateHeader = __bind(this.updateHeader, this);
       this.render = __bind(this.render, this);
       this.initialize = __bind(this.initialize, this);
       ShowCardsMenuView.__super__.constructor.apply(this, arguments);
@@ -485,18 +500,7 @@
           model: model
         });
       }
-      $(this.el).html(html);
-      return this.updateHeader();
-    };
-
-    ShowCardsMenuView.prototype.updateHeader = function() {
-      var header;
-      if (this.shownId > 0) {
-        header = App.decks.get(this.shownId) && App.decks.get(this.shownId).get("title");
-      } else {
-        header = "All cards";
-      }
-      return $("#cards-header").text(header);
+      return $(this.el).html(html);
     };
 
     ShowCardsMenuView.prototype.remove = function() {
@@ -564,6 +568,107 @@
 
   })(Backbone.View);
 
+  Cards.CardSheetView = (function(_super) {
+
+    __extends(CardSheetView, _super);
+
+    function CardSheetView() {
+      this.setDeck = __bind(this.setDeck, this);
+      this.initialize = __bind(this.initialize, this);
+      CardSheetView.__super__.constructor.apply(this, arguments);
+    }
+
+    CardSheetView.cardDisplayTemplate = Handlebars.compile("{{attr.title}}");
+
+    CardSheetView.prototype.initialize = function() {
+      this.headerView = new Foundation.TemplateView({
+        tagName: "h2",
+        template: this.constructor.cardDisplayTemplate
+      });
+      return CardSheetView.__super__.initialize.call(this);
+    };
+
+    CardSheetView.prototype.setDeck = function(deck) {
+      this.setFilter(function(model) {
+        return model.get("deck") === deck.get("id");
+      });
+      return this.headerView.setModel(deck);
+    };
+
+    return CardSheetView;
+
+  })(Foundation.FilteredCollectionView);
+
+  Cards.DeckCollectionView = (function(_super) {
+
+    __extends(DeckCollectionView, _super);
+
+    function DeckCollectionView() {
+      this.remove = __bind(this.remove, this);
+      this.updateNumberOfCards = __bind(this.updateNumberOfCards, this);
+      this.addNewDeck = __bind(this.addNewDeck, this);
+      this.showAllCards = __bind(this.showAllCards, this);
+      this.initialize = __bind(this.initialize, this);
+      DeckCollectionView.__super__.constructor.apply(this, arguments);
+    }
+
+    DeckCollectionView.prototype.events = {
+      "click .showAllCards": "showAllCards",
+      "click .addNewDeck": "addNewDeck"
+    };
+
+    DeckCollectionView.prototype.initialize = function() {
+      this.modelViewClass = Cards.DeckView;
+      this.headerView = new Foundation.StaticView({
+        className: "deck display clickable showAllCards",
+        content: '<div class="contents">\
+					<div class="number-of-cards"></div>\
+					<h2 class="title">\
+						All Cards\
+					</h2>\
+				</div>'
+      });
+      this.footerView = new Foundation.StaticView({
+        className: "deck display clickable addNewDeck",
+        content: '<div class="contents">\
+						<div class="number-of-cards"></div>\
+						<h2 class="title">\
+							Add new deck\
+						</h2>\
+					</div>'
+      });
+      DeckCollectionView.__super__.initialize.call(this);
+      App.allCards.bind("reset", this.updateNumberOfCards, this);
+      App.allCards.bind("add", this.updateNumberOfCards, this);
+      return App.allCards.bind("remove", this.updateNumberOfCards, this);
+    };
+
+    DeckCollectionView.prototype.showAllCards = function() {
+      return App.navigate("cards/all", true);
+    };
+
+    DeckCollectionView.prototype.addNewDeck = function() {
+      return App.decks.create({
+        user: currentUserId
+      });
+    };
+
+    DeckCollectionView.prototype.updateNumberOfCards = function() {
+      var count;
+      count = App.allCards.length;
+      return this.$(".showAllCards .number-of-cards").text(count);
+    };
+
+    DeckCollectionView.prototype.remove = function() {
+      App.allCards.unbind("reset", this.updateNumberOfCards);
+      App.allCards.unbind("add", this.updateNumberOfCards);
+      return App.allCards.unbind("remove", this.updateNumberOfCards);
+    };
+
+    return DeckCollectionView;
+
+  })(Foundation.CollectionView);
+
   Cards.D12Router = (function(_super) {
     var shownView;
 
@@ -574,23 +679,27 @@
       this.showCardSheet = __bind(this.showCardSheet, this);
       this.showAllCards = __bind(this.showAllCards, this);
       this.printOut = __bind(this.printOut, this);
-      this.initialize = __bind(this.initialize, this);
+      this.setup = __bind(this.setup, this);
       D12Router.__super__.constructor.apply(this, arguments);
     }
 
     D12Router.prototype.routes = {
       "cards/all": "showAllCards",
-      "cards/deck/:deck": "showCardSheet"
+      "cards/deck/:deck_id": "showCardSheet"
     };
 
     shownView = null;
 
-    D12Router.prototype.initialize = function() {
+    D12Router.prototype.setup = function() {
       var _this = this;
       this.bind("form:error", this.showError);
       this.allCards = new Cards.CardCollection();
       this.allCards.fetch();
       this.allCardsView = new Foundation.CollectionView({
+        headerView: new Foundation.StaticView({
+          tagName: "h2",
+          content: "All Cards"
+        }),
         prependNew: true,
         el: "#allCardsView",
         collection: this.allCards,
@@ -599,7 +708,7 @@
       this.allCardsInDecks = new Cards.CardInDeckCollection();
       this.allCardsInDecks.fetch();
       this.cardsInDeck = new Cards.CardInDeckCollection();
-      this.cardSheetView = new Foundation.FilteredCollectionView({
+      this.cardSheetView = new Cards.CardSheetView({
         el: "#cardSheetView",
         collection: this.allCardsInDecks,
         modelViewClass: Cards.CardInDeckView,
@@ -608,11 +717,9 @@
         }
       });
       this.decks = new Cards.DeckCollection();
-      this.deckListView = new Foundation.CollectionView({
-        prependNew: true,
+      this.deckListView = new Cards.DeckCollectionView({
         el: "#decksView",
-        collection: this.decks,
-        modelViewClass: Cards.DeckView
+        collection: this.decks
       });
       this.showMenu = new Cards.ShowCardsMenuView({
         el: $("#cards-showMenu"),
@@ -627,11 +734,6 @@
         _this.showAllCards();
         return _this.allCards.create();
       });
-      $("#cards-addDeck").click(function() {
-        return _this.decks.create({
-          user: currentUserId
-        });
-      });
       $("#cards-refreshCards").click(function() {
         _this.allCards.fetch();
         _this.decks.fetch();
@@ -643,8 +745,7 @@
       this.searchView = new Cards.SearchBoxView({
         el: $("#cards-searchBox")
       });
-      this.shownView = this.allCardsView;
-      return D12Router.__super__.initialize.call(this);
+      return this.shownView = this.allCardsView;
     };
 
     D12Router.prototype.printOut = function() {
@@ -664,21 +765,17 @@
       $(this.cardSheetView.el).hide();
       $(this.allCardsView.el).show();
       this.shownView = this.allCardsView;
-      $("#cards-header").text("All cards");
       return this.searchView.clear();
     };
 
-    D12Router.prototype.showCardSheet = function(deck) {
-      var intId;
-      intId = parseInt(deck);
+    D12Router.prototype.showCardSheet = function(deck_id) {
+      var deck, intId;
+      intId = parseInt(deck_id);
+      deck = this.decks.get(deck_id);
       $(this.allCardsView.el).hide();
-      this.cardSheetView.setFilter(function(model) {
-        return model.get("deck") === intId;
-      });
-      this.cardSheetView.render();
+      this.cardSheetView.setDeck(deck);
       $(this.cardSheetView.el).show();
       this.shownView = this.cardSheetView;
-      $("#cards-header").text(this.decks.get(intId).get("title"));
       return this.searchView.clear();
     };
 
@@ -694,6 +791,7 @@
 
   window.Foundation.inits.push(function() {
     window.App = new Cards.D12Router();
+    App.setup();
     return window.location.hash = "";
   });
 

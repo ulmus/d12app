@@ -119,6 +119,9 @@
 	{{/each}}
 	</script>
 
+	<script id="tmplNameDisplay" type="text/x-template">{{ attr.name }}</script>
+	<script id="tmplTitleDisplay" type="text/x-template">{{ attr.title }}</script>
+
 	<script id="tmplDeleteModal" type="text/x-template">
 		<div class="deleteModal modal hide fade" style="display: none; ">
 	        <div class="modal-header">
@@ -194,13 +197,16 @@
     </div>
 	<div class="container">
 		<div class="row">
-			<div class="span14 offset2 noprint"><h1 id="cards-header">All cards</h1></div>
 		</div>
 		<div class="row">
 			<div class="span2 noprint relative">
 				&nbsp;
 				<div class="sidebar fixed">
-					<div id="trashView" class="trash">
+					<div id="cards-addCardView" class="cards-toolbar-card">
+					</div>
+					<div id="cards-addDeckView" class="cards-toolbar-deck">
+					</div>
+					<div id="trashView" class="cards-toolbar-trash">
 					</div>
 				</div>
 			</div>

@@ -133,11 +133,26 @@ class Backbone.Form.editors.ChosenSelect extends Backbone.Form.editors.Select
 
 # Generic Views
 
+class Foundation.StaticView extends Backbone.View
+
+	initialize: =>
+		@content = @options.content
+		super()
+
+	render: =>
+		$(@el).html(@content)
+		super()
+
+	setContent: (newContent) =>
+		@content = newContent
+		@render()
+
 class Foundation.TemplateView extends Backbone.View
 
 	@template: $.noop
 	
 	initialize: =>
+		@constructor.template = if @options.template then @options.template else @constructor.template
 		@bindModel(@model)
 		super()
 	
@@ -157,6 +172,7 @@ class Foundation.TemplateView extends Backbone.View
 		@unbindModel(@model)
 		@model = newModel
 		@bindModel(@model)
+		@render()
 		
 	bindModel: (model) =>
 		if model and model instanceof Backbone.Model
@@ -248,16 +264,26 @@ class Foundation.EditableTemplateView extends Foundation.TemplateView
 
 
 class Foundation.CollectionView extends Backbone.View
-	
+
+	# Options
 	prependNew: false
-	
+	headerView = null
+	footerView = null
+	collection = null
+	modelViewClass = null
+
 	initialize: =>
 		_(@options).defaults(
 			prependNew: @prependNew
 		)
+		_.defaults(@, {
+
+		})
 		@prependNew = @options.prependNew
-		@collection = @options.collection
-		@modelViewClass = @options.modelViewClass
+		@headerView = if @options.headerView then @options.headerView else @headerView
+		@footerView = if @options.footerView then @options.footerView else @footerView
+		@collection = if @options.collection then @options.collection else @collection
+		@modelViewClass = if @options.modelViewClass then @options.modelViewClass else @modelViewClass
 		@modelViews = {}
 		@setup
 		@bindCollection(@collection)
@@ -281,6 +307,9 @@ class Foundation.CollectionView extends Backbone.View
 	render: =>
 		$el = $(@el)
 		$el.empty()
+		if @headerView
+			$el.append(@headerView.el)
+			@headerView.render()
 		for model in @getModels()
 			view = @modelViews[model.cid]
 			if view
@@ -288,7 +317,10 @@ class Foundation.CollectionView extends Backbone.View
 				view.render()					
 			else
 			 	console and console.log("CollectionViewError: ModelView not found for ", model)
-		super
+		if @footerView
+			$el.append(@footerView.el)
+			@footerView.render()
+		super()
 	
 	remove: =>
 		@unbindCollection(@collection)
@@ -309,9 +341,15 @@ class Foundation.CollectionView extends Backbone.View
 	addModel: (model) =>
 		view = @addModelView(model)
 		if @prependNew
-			$(@el).prepend(view.el)
+			if @headerView
+				$(view.el).insertAfter(@headerView.el)
+			else
+				$(@el).prepend(view.el)
 		else
-			$(@el).append(view.el)
+			if @footerView
+				$(view.el).insertBefore(@footerView.el)
+			else
+				$(@el).append(view.el)
 
 		view.render()
 		if view.afterAdd
@@ -336,6 +374,19 @@ class Foundation.CollectionView extends Backbone.View
 		else
 		 	console and console.log("CollectionViewError: ModelView not found for ", model)
 
+	setHeaderView: (newHeaderView) =>
+		@headerView.remove()
+		@headerView = newHeaderView
+		if @headerView
+			$(@el).prepend(@headerView.el)
+			@headerView.render()
+
+	setFooterView: (newFooterView) =>
+		@footerView.remove()
+		@footerView = newFooterView
+		if @footerView
+			$(@el).prepend(@footerView.el)
+			@footerView.render()
 
 	hideSome: (hideFn) =>
 		models = @getModels()
@@ -385,6 +436,7 @@ methodMap =
 
 # Helper function to get a URL from a Model or Collection as a property
 # or as a function.
+
 getUrl = (object) ->
   if (not (object && object.url)) then return null
   return if _.isFunction(object.url) then object.url() else object.url

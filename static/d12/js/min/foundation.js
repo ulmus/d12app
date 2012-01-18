@@ -227,6 +227,36 @@
 
   })(Backbone.Form.editors.Select);
 
+  Foundation.StaticView = (function(_super) {
+
+    __extends(StaticView, _super);
+
+    function StaticView() {
+      this.setContent = __bind(this.setContent, this);
+      this.render = __bind(this.render, this);
+      this.initialize = __bind(this.initialize, this);
+      StaticView.__super__.constructor.apply(this, arguments);
+    }
+
+    StaticView.prototype.initialize = function() {
+      this.content = this.options.content;
+      return StaticView.__super__.initialize.call(this);
+    };
+
+    StaticView.prototype.render = function() {
+      $(this.el).html(this.content);
+      return StaticView.__super__.render.call(this);
+    };
+
+    StaticView.prototype.setContent = function(newContent) {
+      this.content = newContent;
+      return this.render();
+    };
+
+    return StaticView;
+
+  })(Backbone.View);
+
   Foundation.TemplateView = (function(_super) {
 
     __extends(TemplateView, _super);
@@ -245,6 +275,7 @@
     TemplateView.template = $.noop;
 
     TemplateView.prototype.initialize = function() {
+      this.constructor.template = this.options.template ? this.options.template : this.constructor.template;
       this.bindModel(this.model);
       return TemplateView.__super__.initialize.call(this);
     };
@@ -267,7 +298,8 @@
     TemplateView.prototype.setModel = function(newModel) {
       this.unbindModel(this.model);
       this.model = newModel;
-      return this.bindModel(this.model);
+      this.bindModel(this.model);
+      return this.render();
     };
 
     TemplateView.prototype.bindModel = function(model) {
@@ -397,12 +429,15 @@
   })(Foundation.TemplateView);
 
   Foundation.CollectionView = (function(_super) {
+    var collection, footerView, headerView, modelViewClass;
 
     __extends(CollectionView, _super);
 
     function CollectionView() {
       this.showAll = __bind(this.showAll, this);
       this.hideSome = __bind(this.hideSome, this);
+      this.setFooterView = __bind(this.setFooterView, this);
+      this.setHeaderView = __bind(this.setHeaderView, this);
       this.getModelView = __bind(this.getModelView, this);
       this.removeModel = __bind(this.removeModel, this);
       this.removeModelView = __bind(this.removeModelView, this);
@@ -420,13 +455,24 @@
 
     CollectionView.prototype.prependNew = false;
 
+    headerView = null;
+
+    footerView = null;
+
+    collection = null;
+
+    modelViewClass = null;
+
     CollectionView.prototype.initialize = function() {
       _(this.options).defaults({
         prependNew: this.prependNew
       });
+      _.defaults(this, {});
       this.prependNew = this.options.prependNew;
-      this.collection = this.options.collection;
-      this.modelViewClass = this.options.modelViewClass;
+      this.headerView = this.options.headerView ? this.options.headerView : this.headerView;
+      this.footerView = this.options.footerView ? this.options.footerView : this.footerView;
+      this.collection = this.options.collection ? this.options.collection : this.collection;
+      this.modelViewClass = this.options.modelViewClass ? this.options.modelViewClass : this.modelViewClass;
       this.modelViews = {};
       this.setup;
       this.bindCollection(this.collection);
@@ -455,6 +501,10 @@
       var $el, model, view, _i, _len, _ref;
       $el = $(this.el);
       $el.empty();
+      if (this.headerView) {
+        $el.append(this.headerView.el);
+        this.headerView.render();
+      }
       _ref = this.getModels();
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         model = _ref[_i];
@@ -466,7 +516,11 @@
           console && console.log("CollectionViewError: ModelView not found for ", model);
         }
       }
-      return CollectionView.__super__.render.apply(this, arguments);
+      if (this.footerView) {
+        $el.append(this.footerView.el);
+        this.footerView.render();
+      }
+      return CollectionView.__super__.render.call(this);
     };
 
     CollectionView.prototype.remove = function() {
@@ -501,9 +555,17 @@
       var view;
       view = this.addModelView(model);
       if (this.prependNew) {
-        $(this.el).prepend(view.el);
+        if (this.headerView) {
+          $(view.el).insertAfter(this.headerView.el);
+        } else {
+          $(this.el).prepend(view.el);
+        }
       } else {
-        $(this.el).append(view.el);
+        if (this.footerView) {
+          $(view.el).insertBefore(this.footerView.el);
+        } else {
+          $(this.el).append(view.el);
+        }
       }
       view.render();
       if (view.afterAdd) return view.afterAdd();
@@ -533,6 +595,24 @@
         return view;
       } else {
         return console && console.log("CollectionViewError: ModelView not found for ", model);
+      }
+    };
+
+    CollectionView.prototype.setHeaderView = function(newHeaderView) {
+      this.headerView.remove();
+      this.headerView = newHeaderView;
+      if (this.headerView) {
+        $(this.el).prepend(this.headerView.el);
+        return this.headerView.render();
+      }
+    };
+
+    CollectionView.prototype.setFooterView = function(newFooterView) {
+      this.footerView.remove();
+      this.footerView = newFooterView;
+      if (this.footerView) {
+        $(this.el).prepend(this.footerView.el);
+        return this.footerView.render();
       }
     };
 

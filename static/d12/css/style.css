@@ -263,6 +263,13 @@ div.card .icons.right {
 div.card .contents .icons.right li {
 	float: right;
 }
+
+div.deck-list {
+	width: 160px;
+	overflow-y: scroll;
+	height: 100%;
+}
+
 div.deck {
 	/*font-family: 'Expletus Sans', sans-serif;*/
 	font-size: 12pt;
@@ -350,13 +357,13 @@ div.card textarea {
 div.sidebar {
 	width: 88px;
 }
-div.trash {
+div.cards-toolbar-trash {
 	width: 84px;
 	height: 84px;
 	background-image: url("/static/d12/media/trash.png");
 }
 
-div.trash.drophover {
+div.cards-toolbar-trash.drophover {
 	background-image: url("/static/d12/media/trash_glow.png") !important;
 }
 

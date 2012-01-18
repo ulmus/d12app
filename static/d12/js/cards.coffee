@@ -167,9 +167,21 @@ class Cards.CardInDeckView extends Foundation.TemplateView
 		)
 		@
 
-class Cards.DeckView extends Foundation.EditableTemplateView
+class Cards.DeckView extends Foundation.TemplateView
 
-	@template: Foundation.getTemplate("tmplDeck")
+	events:
+		"click": 	"showDeck"
+
+	@template: Handlebars.compile(
+		'<div class="contents">
+			<div class="number-of-cards"></div>
+			<h2 class="title">
+				{{attr.title}}
+			</h2>
+		</div>'
+	)
+
+	className: "deck display clickable visual-drop-target showDeck"
 
 	initialize: =>
 		super()
@@ -200,6 +212,9 @@ class Cards.DeckView extends Foundation.EditableTemplateView
 			return (model.get("deck") == @model.id)
 		).length
 		@$(".number-of-cards").text(count)
+
+	showDeck: =>
+		App.navigate("cards/deck/#{@model.id}", true)
 
 
 	remove: =>
@@ -299,15 +314,6 @@ class Cards.ShowCardsMenuView extends Backbone.View
 				model: model
 			)
 		$(@el).html(html)
-		@updateHeader()
-
-
-	updateHeader: =>
-		if @shownId > 0
-			header = App.decks.get(@shownId) and App.decks.get(@shownId).get("title")
-		else
-			header = "All cards"
-		$("#cards-header").text(header)
 
 	remove: =>
 		@collection.unbind("reset", @render)
@@ -347,25 +353,96 @@ class Cards.SearchBoxView extends Backbone.View
 					title.indexOf(term)
 				)
 
+class Cards.CardSheetView extends Foundation.FilteredCollectionView
+
+	@cardDisplayTemplate = Handlebars.compile("{{attr.title}}")
+
+	initialize: =>
+		@headerView = new Foundation.TemplateView(
+			tagName: "h2"
+			template: @constructor.cardDisplayTemplate
+		)
+		super()
+
+	setDeck:(deck) =>
+		@setFilter((model) -> return model.get("deck") == deck.get("id"))
+		@headerView.setModel(deck)
+
+
+class Cards.DeckCollectionView extends Foundation.CollectionView
+
+	events:
+		"click .showAllCards"		: "showAllCards"
+		"click .addNewDeck"			: "addNewDeck"
+
+	initialize: =>
+		@modelViewClass = Cards.DeckView
+		@headerView = new Foundation.StaticView(
+			className: "deck display clickable showAllCards"
+			content:
+				'<div class="contents">
+					<div class="number-of-cards"></div>
+					<h2 class="title">
+						All Cards
+					</h2>
+				</div>'
+			)
+		@footerView = new Foundation.StaticView(
+			className: "deck display clickable addNewDeck"
+			content:
+					'<div class="contents">
+						<div class="number-of-cards"></div>
+						<h2 class="title">
+							Add new deck
+						</h2>
+					</div>'
+		)
+		super()
+		App.allCards.bind("reset", @updateNumberOfCards, @)
+		App.allCards.bind("add", @updateNumberOfCards, @)
+		App.allCards.bind("remove", @updateNumberOfCards, @)
+
+
+	showAllCards: =>
+		App.navigate("cards/all", true)
+
+	addNewDeck: =>
+		App.decks.create(
+			user: currentUserId
+		)
+
+	updateNumberOfCards: =>
+		count = App.allCards.length
+		@$(".showAllCards .number-of-cards").text(count)
+
+	remove: =>
+		App.allCards.unbind("reset", @updateNumberOfCards)
+		App.allCards.unbind("add", @updateNumberOfCards)
+		App.allCards.unbind("remove", @updateNumberOfCards)
+
 # Router
 
 class Cards.D12Router extends Backbone.Router
 
 	routes:
 		"cards/all" :			"showAllCards"
-		"cards/deck/:deck" :	"showCardSheet"
+		"cards/deck/:deck_id" :	"showCardSheet"
 
 	shownView = null
 
-	initialize: =>
+	setup: =>
 		# General bindings
 		@.bind("form:error", @.showError)
-		
+
 		# Views and general collections
 		@allCards = new Cards.CardCollection()
 		@allCards.fetch()
 
 		@allCardsView = new Foundation.CollectionView({
+			headerView: new Foundation.StaticView(
+				tagName: "h2"
+				content: "All Cards"
+			)
 			prependNew: true,
 			el: "#allCardsView",
 			collection: @allCards,
@@ -376,7 +453,7 @@ class Cards.D12Router extends Backbone.Router
 		@allCardsInDecks.fetch()
 
 		@cardsInDeck = new Cards.CardInDeckCollection()
-		@cardSheetView = new Foundation.FilteredCollectionView({
+		@cardSheetView = new Cards.CardSheetView({
 			el: "#cardSheetView",
 			collection: @allCardsInDecks,
 			modelViewClass: Cards.CardInDeckView
@@ -384,11 +461,9 @@ class Cards.D12Router extends Backbone.Router
 		})
 
 		@decks = new Cards.DeckCollection()
-		@deckListView = new Foundation.CollectionView(
-			prependNew: true,
+		@deckListView = new Cards.DeckCollectionView(
 			el: "#decksView",
 			collection: @decks,
-			modelViewClass: Cards.DeckView
 		)
 		@showMenu = new Cards.ShowCardsMenuView(
 			el: $("#cards-showMenu")
@@ -408,11 +483,6 @@ class Cards.D12Router extends Backbone.Router
 			@allCards.create()
 		)
 
-		$("#cards-addDeck").click(=>
-			@decks.create(
-				user: currentUserId
-			)
-		)
 		$("#cards-refreshCards").click(=>
 			@allCards.fetch()
 			@decks.fetch()
@@ -430,7 +500,7 @@ class Cards.D12Router extends Backbone.Router
 		})
 
 		@shownView = @allCardsView
-		super()
+
 
 	printOut: =>
 		printout = new Printouts.Printout(
@@ -446,17 +516,15 @@ class Cards.D12Router extends Backbone.Router
 		$(@cardSheetView.el).hide()
 		$(@allCardsView.el).show()
 		@shownView = @allCardsView
-		$("#cards-header").text("All cards")
 		@searchView.clear()
 
-	showCardSheet: (deck) =>
-		intId = parseInt(deck)
+	showCardSheet: (deck_id) =>
+		intId = parseInt(deck_id)
+		deck = @decks.get(deck_id)
 		$(@allCardsView.el).hide()
-		@cardSheetView.setFilter((model) -> return model.get("deck") == intId)
-		@cardSheetView.render()
+		@cardSheetView.setDeck(deck)
 		$(@cardSheetView.el).show()
 		@shownView = @cardSheetView
-		$("#cards-header").text(@decks.get(intId).get("title"))
 		@searchView.clear()
 
 	showError: (errorData) =>
@@ -468,5 +536,6 @@ class Cards.D12Router extends Backbone.Router
 # Initialization
 window.Foundation.inits.push(->
 	window.App = new Cards.D12Router()
+	App.setup()
 	window.location.hash=""
 )
