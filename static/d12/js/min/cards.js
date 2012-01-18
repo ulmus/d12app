@@ -582,6 +582,7 @@
     CardSheetView.prototype.initialize = function() {
       this.headerView = new Foundation.TemplateView({
         tagName: "h2",
+        className: "noprint",
         template: this.constructor.cardDisplayTemplate
       });
       return CardSheetView.__super__.initialize.call(this);

@@ -360,6 +360,7 @@ class Cards.CardSheetView extends Foundation.FilteredCollectionView
 	initialize: =>
 		@headerView = new Foundation.TemplateView(
 			tagName: "h2"
+			className: "noprint"
 			template: @constructor.cardDisplayTemplate
 		)
 		super()
