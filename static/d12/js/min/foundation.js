@@ -165,7 +165,7 @@
       if (this.isNew()) {
         return this.rootUrl;
       } else {
-        return this.rootUrl + ("/" + this.id);
+        return this.rootUrl + this.id;
       }
     };
 

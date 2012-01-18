@@ -108,7 +108,7 @@ class Foundation.Model extends Backbone.Model
 		if @isNew()
 			return @rootUrl
 		else
-			return @rootUrl + "/#{@id}"
+			return @rootUrl + @id
 
 #  Form Fields
 
