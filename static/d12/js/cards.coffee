@@ -226,7 +226,7 @@ class Cards.TrashView extends Backbone.View
 
 	render: =>
 		super()
-		$(@el).droppable(
+		@$(".content").droppable(
 			tolerance: "pointer"
 			accept: ".card",
 			hoverClass: 'drophover'
@@ -402,6 +402,9 @@ class Cards.DeckCollectionView extends Foundation.CollectionView
 		App.allCards.bind("add", @updateNumberOfCards, @)
 		App.allCards.bind("remove", @updateNumberOfCards, @)
 
+	render: =>
+		super()
+		@updateNumberOfCards()
 
 	showAllCards: =>
 		App.navigate("cards/all", true)

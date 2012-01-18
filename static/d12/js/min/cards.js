@@ -388,7 +388,7 @@
     TrashView.prototype.render = function() {
       var _this = this;
       TrashView.__super__.render.call(this);
-      return $(this.el).droppable({
+      return this.$(".content").droppable({
         tolerance: "pointer",
         accept: ".card",
         hoverClass: 'drophover',
@@ -608,6 +608,7 @@
       this.updateNumberOfCards = __bind(this.updateNumberOfCards, this);
       this.addNewDeck = __bind(this.addNewDeck, this);
       this.showAllCards = __bind(this.showAllCards, this);
+      this.render = __bind(this.render, this);
       this.initialize = __bind(this.initialize, this);
       DeckCollectionView.__super__.constructor.apply(this, arguments);
     }
@@ -641,6 +642,11 @@
       App.allCards.bind("reset", this.updateNumberOfCards, this);
       App.allCards.bind("add", this.updateNumberOfCards, this);
       return App.allCards.bind("remove", this.updateNumberOfCards, this);
+    };
+
+    DeckCollectionView.prototype.render = function() {
+      DeckCollectionView.__super__.render.call(this);
+      return this.updateNumberOfCards();
     };
 
     DeckCollectionView.prototype.showAllCards = function() {
