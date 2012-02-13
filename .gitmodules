@@ -1,0 +1,3 @@
+[submodule "static/lib/backbone-forms"]
+	path = static/lib/backbone-forms
+	url = git@github.com:ulmus/backbone-forms.git
