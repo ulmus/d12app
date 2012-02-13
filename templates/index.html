@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<title>d12app</title>
 	<link rel="stylesheet" type="text/css" href="/static/lib/jquery-ui/css/smoothness/jquery-ui-1.8.16.custom.css"  media="screen">
-	<link rel="stylesheet" type="text/css" href="/static/lib/bootstrap/bootstrap.min.css"  media="screen">
+	<link rel="stylesheet" type="text/css" href="/static/lib/bootstrap/css/bootstrap.min.css"  media="screen">
 	<link rel="stylesheet" type="text/css" href="/static/lib/chosen/chosen.css" media="screen">
 	<link rel="stylesheet" href="/static/lib/fonts/stylesheet.css" type="text/css">
 	<link rel="stylesheet" type="text/css" href="/static/d12/css/style.css">
@@ -16,177 +16,40 @@
 	<script src="/static/lib/js/underscore-min.js"></script>
 	<script src="/static/lib/js/moment.min.js"></script>
 	<script src="/static/lib/js/backbone.js"></script>
-	<script src="/static/lib/backbone-forms/src/backbone-forms.js"></script>
+	<script src="/static/lib/js/backbone-forms.js"></script>
 	<script src="/static/lib/js/handlebars.js"></script>
 	<script src="/static/lib/js/Markdown.Converter.js"></script>
 	<script src="/static/lib/js/Markdown.Sanitizer.js"></script>
-	<script src="/static/lib/bootstrap/js/bootstrap-alerts.js"></script>
-	<script src="/static/lib/bootstrap/js/bootstrap-buttons.js"></script>
-	<script src="/static/lib/bootstrap/js/bootstrap-dropdown.js"></script>
-	<script src="/static/lib/bootstrap/js/bootstrap-modal.js"></script>
-	<script src="/static/lib/bootstrap/js/bootstrap-twipsy.js"></script>
-	<script src="/static/lib/bootstrap/js/bootstrap-popover.js"></script>
-	<script src="/static/lib/bootstrap/js/bootstrap-tabs.js"></script>
-	<script src="/static/lib/js/uuid.js"></script>
+	<script src="/static/lib/bootstrap/js/bootstrap.js"></script>
 
-	<!-- Templates -->
-	{% verbatim %}
-	<script id="tmplCard" type="text/x-template">
-	<div class="card display clickable editable" data-model-id="{{model.id}}" data-card-id="{{ model.id }}" data-model-type="card" data-protected="{{ attr.protected }}">
-		<div class="contents {{cardActionClassName attr.type}}">
-			<h2 class="title">
-				{{attr.title}}
-			</h2>
-			{{#if attr.protected }}<div class="noprint lock websymbol">x</div>{{/if }}
-			<div class="cardtext">
-				<div class="body">
-					{{{markdown attr.body}}}
-				</div>
-			</div>
-			<ul class="icons left">
-				<li class="action-type">{{cardActionDisplay attr.type}}</li>
-			</ul>
-			<ul class="icons right">
-				<li><span class="websymbol">{{cardCategoryDisplaySymbol attr.category}}</span></li>
-			</ul>
-		</div>
-	</div>
-	<div class="card edit hide">
-		<div class="contents">
-			<h3>Edit card</h3>
-			<form class="editForm">
-			</form>
-			<div class="toolbar">
-				<button class="btn primary save nofocus" value="Save">Save</button>
-				<button class="btn cancel">Cancel</button>
-			</div>
-		</div>
-	</div>
-	</script>
-
-	<script id="tmplCardInDeck" type="text/x-template">
-		<div class="card display clickable" data-model-id="{{model.id}}" data-deck-id="{{ deck.id }}" data-card-id="{{ card.id }}" data-model-type="cardInDeck">
-			<div class="contents {{cardActionClassName card.attributes.type}}">
-				<h2 class="title">
-					{{card.attributes.title}}
-				</h2>
-				<div class="cardtext">
-					<div class="category">
-							{{cardCategoryDisplay attr.category}}
-					</div>
-					<div class="body">
-						{{{markdown card.attributes.body}}}
-					</div>
-				</div>
-				<ul class="icons left">
-					<li class="action-type">{{cardActionDisplay card.attributes.type}}</li>
-				</ul>
-				<ul class="icons right">
-					<li><span class="websymbol">{{cardCategoryDisplaySymbol card.attributes.category}}</span></li>
-				</ul>
-			</div>
-		</div>
-	</script>
-
-	<script id="tmplDeck" type="text/x-template">
-	<div class="deck display clickable visual-drop-target" data-model-id="{{model.id}}">
-		<div class="contents">
-			<div class="number-of-cards"></div>
-			<h2 class="title">
-				{{attr.title}}
-			</h2>
-		</div>
-	</div>
-	<div class="deck edit hide">
-		<div class="contents">
-			<h3>Edit deck</h3>
-			<form class="editForm">
-				<input type=submit class="hide" value="Save">
-			</form>
-			<div class="toolbar">
-				<button class="btn primary save nofocus">Save</button>
-				<button class="btn danger delete">Delete</button>
-				<button class="btn cancel">Cancel</button>
-			</div>
-		</div>
-	</div>
-	</script>
-
-
-	<script id="tmplCardListContent" type="text/x-template">
-	{{#each model}}
-	<li><a href="#card/{{this.id}}/">{{this.title}}</a></li>
-	{{/each}}
-	</script>
-
-	<script id="tmplNameDisplay" type="text/x-template">{{ attr.name }}</script>
-	<script id="tmplTitleDisplay" type="text/x-template">{{ attr.title }}</script>
-
-	<script id="tmplDeleteModal" type="text/x-template">
-		<div class="deleteModal modal hide fade" style="display: none; ">
-	        <div class="modal-header">
-	          <a href="#" class="close">×</a>
-	          <h3>Warning!</h3>
-	        </div>
-	        <div class="modal-body">
-	          <p>Do you wan&#39;t to delete the {{modelName}} "<em>{{instanceName}}</em>"? This action can&#39;t be undone!</p>
-	        </div>
-	        <div class="modal-footer">
-	          <a href="#" class="btn danger do">Delete "<em>{{instanceName}}</em>"</a>
-	          <a href="#" class="btn secondary cancel">Cancel</a>
-	        </div>
-	    </div>
-	</script>
-		
-	<script id="tmplProtectedModal" type="text/x-template">
-		<div class="deleteModal modal hide fade" style="display: none; ">
-			<div class="modal-header">
-			  <a href="#" class="close">×</a>
-			  <h3>Unable to put protected {{ modelName }} in trash</h3>
-			</div>
-			<div class="modal-body">
-			  <p>You can&#39;t delete the {{modelName}} "<em>{{instanceName}}</em>" because it is marked as protected.</p>
-			  <p>If you wan&#39;t to delete the {{ modelName }}, you will have to unmark the protected flag first.</p>
-			</div>
-			<div class="modal-footer">
-			  <a href="#" class="btn cancel">Ok</a>
-			</div>
-		</div>
-	</script>
-	{% endverbatim %}
-
-	<!-- Initiate -->
+	<!-- Setup server-side values -->
 	<script>
 		currentUserId = {{ user.id}};
 		currentUserIsAdmin = {% if user.is_staff %}true{% else %}false{% endif %};
 	</script>
+	<script src="/static/d12/js/min/backbone-override.js"></script>
 	<script src="/static/d12/js/min/foundation.js"></script>
+	<script src="/static/d12/js/min/ui.js"></script>
 	<script src="/static/d12/js/min/printouts.js"></script>
 	<script src="/static/d12/js/min/cards.js"></script>
+
+	<script>
+		$(document).ready(function(){
+			Foundation.init();
+		});
+	</script>
+
 	
 </head>
 <body>
 	{% csrf_token %}
-	<div class="topbar noprint">
-      <div class="topbar-inner">
+	<div class="navbar navbar-fixed-top noprint">
+      <div class="navbar-inner">
         <div class="container">
           <a class="brand" href="#">d12app</a>
-          <ul class="nav">
-            <li class=""><a id="cards-addCard" href="#"><span class="websymbol">+</span> Add card</a></li>
-		    <li class=""><a id="cards-addDeck" href="#"><span class="websymbol">+</span> Add deck</a></li>
-            <li class=""><a id="cards-refreshCards" href="#"><span class="websymbol">V</span> Refresh</a></li>
-	        <li class=""><a id="cards-printout" href="#"><span class="websymbol">a</span> Pdf</a></li>
-			<li class="dropdown" data-dropdown="dropdown">
-				<a href="#" class="dropdown-toggle">Show</a>
-				<ul class="dropdown-menu" id="cards-showMenu">
-					
-				</ul>
-			</li>
+          <ul class="nav" id="app-nav">
           </ul>
-		  <form class="pull-left" onsubmit="return false" id="cards-searchBox">
-		    <input type="text" placeholder="Search">
-		  </form>
-          <ul class="secondary-nav">
+          <ul class="nav pull-right">
 			{% if user.is_staff %}
             <li class=""><a id="cards-admin" href="/admin/"><span class="websymbol">S</span> Admin</a></li>
 			{% endif %}
@@ -195,34 +58,7 @@
         </div>
       </div>
     </div>
-	<div class="container">
-		<div class="row">
-		</div>
-		<div class="row">
-			<div class="span2 noprint relative">
-				&nbsp;
-				<div class="sidebar fixed">
-					<div id="cards-addCardView" class="cards-toolbar-card">
-					</div>
-					<div id="cards-addDeckView" class="cards-toolbar-deck">
-					</div>
-					<div id="trashView" class="cards-toolbar-trash">
-					</div>
-				</div>
-			</div>
-			<div class="span13">
-				<div id="cardSheetView" class="card-sheet">
-				</div>
-				<div id="allCardsView" class="card-sheet">
-				</div>
-				&nbsp;
-			</div>
-			
-			<div class="span1 noprint relative">
-				<div id="decksView" class="deck-list fixed">
-				</div>
-			</div>
-		</div>
+	<div id="app-main" class="container-fluid">
 	</div>
 	<div id="markdown-help" class="hide">
 		<p>Use <a href="http://daringfireball.net/projects/markdown/syntax" target="_new">markdown</a> for formatting:</p>

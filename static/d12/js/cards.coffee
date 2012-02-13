@@ -1,14 +1,46 @@
-# Namespace
-
-window.Cards = {}
-
-# Globals
+# Module Globals
 
 baseUrl = "/api/cards/"
+module = null
+
+# Imports
+
+Foundation = window.Foundation
+UI = Foundation.UI
+
+# Template Helpers
+
+Handlebars.registerHelper("cardActionDisplay", (abbr) ->
+	switch abbr
+		when "ACTN" then "Primary"
+		when "MOVE" then "Movement"
+		when "SPRT" then "Support"
+		when "REAC" then "Reaction"
+)
+
+Handlebars.registerHelper("cardActionClassName", (abbr) ->
+	switch abbr
+		when "ACTN" then "primary"
+		when "MOVE" then "movement"
+		when "SPRT" then "support"
+		when "REAC" then "reaction"
+)
+
+Handlebars.registerHelper("cardCategoryDisplay", (abbr) ->
+	switch abbr
+		when "BASC" then "Basic"
+		when "ADVN" then "Advanced"
+)
+
+Handlebars.registerHelper("cardCategoryDisplaySymbol", (abbr) ->
+	switch abbr
+		when "BASC" then "N"
+		when "ADVN" then "O"
+)
 
 # The Card Models and Collections
 
-class Cards.Card extends Foundation.Model
+class Card extends Foundation.Model
 
 	@name: "card"
 
@@ -19,9 +51,11 @@ class Cards.Card extends Foundation.Model
 		title			: ""
 		type			: "ACTN"
 		body			: ""
+		disrupts		: false
+		refresh			: 0
 		keywords		: []
 		
-	schema:
+	schema: ->
 		title:
 			type: "Text"
 			title: "Title"
@@ -44,24 +78,29 @@ class Cards.Card extends Foundation.Model
 				{val: "SPRT", label: "Support"},
 				{val: "REAC", label: "Reaction"},				
 			]
+		disrupts:
+			type: "Checkbox"
+			title: "Disrupts"
+		refresh:
+			type: "Number"
+			title: "Refresh"
 		protected:
 			type: "Checkbox"
 			title: "Protected"
 
-
-	toString: =>
+	toString: ->
 		@get("title")
 
-class Cards.CardCollection extends Foundation.Collection
+class CardCollection extends Foundation.Collection
 
-	model: Cards.Card
+	model: Card
 	rootUrl: baseUrl + "card/"
 
 	comparator: (model) ->
 		return model.get("category") + model.get("type") + model.get("title")
 
 
-class Cards.Deck extends Foundation.Model
+class Deck extends Foundation.Model
 	@name: "deck"
 
 	rootUrl: baseUrl + "deck/"
@@ -78,17 +117,17 @@ class Cards.Deck extends Foundation.Model
 			type: "Text"
 			title: "Description"
 
-	toString: =>
+	toString: ->
 		@get("title")
 
 
-class Cards.DeckCollection extends Foundation.Collection
+class DeckCollection extends Foundation.Collection
 
-	model: Cards.Deck
+	model: Deck
 	rootUrl: baseUrl + "deck/"
 
 
-class Cards.CardInDeck extends Foundation.Model
+class CardInDeck extends Foundation.Model
 	
 	rootUrl: baseUrl + "cardindeck/"
 	
@@ -98,432 +137,226 @@ class Cards.CardInDeck extends Foundation.Model
 		order:		0
 		
 
-	getCard: =>
-		return App.allCards.get(@.get("card"))
+	getCard: ->
+		return module.getCard(@.get("card"))
 	
-	getDeck: =>
-		return App.decks.get(@.get("deck"))
+	getDeck: ->
+		return module.getDeck(@.get("deck"))
 	
-	toString: =>
+	toString: ->
 		@get("title")
 
-class Cards.CardInDeckCollection extends Foundation.Collection
+class CardInDeckCollection extends Foundation.Collection
 
-	model: Cards.CardInDeck
+	model: CardInDeck
 	rootUrl: baseUrl + "cardindeck/"
 
 ########################
 # VIEWS                #
 ########################
 
-class Cards.CardView extends Foundation.EditableTemplateView
-		
-	@template: Foundation.getTemplate("tmplCard")
-	@modelName = "card"
-	
-	render: =>
-		super()
-		@$(".card").draggable(
-			appendTo: "body"
-			helper: "clone"
-			delay: 50
-			cursorAt:
-				left: 120
-				top: 170
-		)
-		@
+class CardView extends UI.EditableModelView
 
-	showEdit: =>
-		super()
-		@$(".editForm textarea#body").popover({
-			title: => "Formatting help"
-			content: => $("#markdown-help").html()
-			html: true
-			trigger: "focus"
-		})
+	className: -> super() + " card"
 
-
-class Cards.CardInDeckView extends Foundation.TemplateView
-
-	@template: Foundation.getTemplate("tmplCardInDeck")
-
-	getContext: =>
-		return {
-			attr: @model.toJSON()
-			model: @model
-			card: App.allCards.get(@model.get("card"))
-			deck: App.decks.get(@model.get("deck"))
-		}
-
-	render: =>
-		super()
-		@$(".card").draggable(
-			appendTo: "body"
-			helper: "clone"
-			delay: 50
-			cursorAt:
-				left: 120
-				top: 170
-		)
-		@
-
-class Cards.DeckView extends Foundation.TemplateView
-
-	events:
-		"click": 	"showDeck"
-
-	@template: Handlebars.compile(
-		'<div class="contents">
-			<div class="number-of-cards"></div>
+	@template: Handlebars.compile('
+		<div class="contents {{cardActionClassName attr.type}}">
 			<h2 class="title">
 				{{attr.title}}
 			</h2>
-		</div>'
-	)
+			{{#if attr.protected }}<div class="noprint lock websymbol">x</div>{{/if }}
+			<div class="cardtext">
+				<div class="body">
+					{{{markdown attr.body}}}
+				</div>
+			</div>
+			<ul class="icons left">
+				<li class="action-type">{{cardActionDisplay attr.type}}</li>
+			</ul>
+			<ul class="icons right">
+				<li><span class="websymbol">{{cardCategoryDisplaySymbol attr.category}}</span></li>
+				{{#if attr.refresh }}<li>{{attr.refresh}}</li>{{/if}}
+				{{#if attr.disrupts }}<li>D</li>{{/if}}
+			</ul>
+		</div>
+	')
 
-	className: "deck display clickable visual-drop-target showDeck"
+	@modelName = "card"
 
-	initialize: =>
+	showEditOnNew: true
+
+	events: ->
+		events = super()
+		_.extend(events, "click" : "showEdit")
+		events
+
+
+
+class CardInDeckView extends Foundation.ModelView
+
+	className: "card"
+
+	@template: Handlebars.compile('
+			<div class="contents {{cardActionClassName card.attributes.type}}">
+				<h2 class="title">
+					{{card.attributes.title}}
+				</h2>
+				<div class="cardtext">
+					<div class="category">
+							{{cardCategoryDisplay attr.category}}
+					</div>
+					<div class="body">
+						{{{markdown card.attributes.body}}}
+					</div>
+				</div>
+				<ul class="icons left">
+					<li class="action-type">{{cardActionDisplay card.attributes.type}}</li>
+				</ul>
+				<ul class="icons right">
+					<li><span class="websymbol">{{cardCategoryDisplaySymbol card.attributes.category}}</span></li>
+				</ul>
+			</div>
+	')
+
+	getContext: ->
+		return {
+			attr: @model.toJSON()
+			model: @model
+			card: @model.getCard()
+			deck: @model.getDeck()
+		}
+
+	render: ->
 		super()
-		App.allCardsInDecks.bind("reset", @updateNumberOfCards, @)
-		App.allCardsInDecks.bind("add", @updateNumberOfCards, @)
-		App.allCardsInDecks.bind("remove", @updateNumberOfCards, @)
-
-	render: =>
-		super()
-		@$(".contents").droppable(
-			tolerance: "pointer"
-			# accept: ".card"
-			hoverClass: 'drophover'
-			drop: (event, ui) =>
-				@dropCard(event, ui)
+		$(@el).draggable(
+			appendTo: "body"
+			helper: "clone"
+			delay: 50
+			cursorAt:
+				left: 120
+				top: 170
 		)
-		@updateNumberOfCards()
 		@
 
-	dropCard: (event, ui) =>
-		App.allCardsInDecks.create(
-			card: ui.draggable.data("cardId")
-			deck: @model.id
-		)
-
-	updateNumberOfCards: =>
-		count = App.allCardsInDecks.filter((model)=>
-			return (model.get("deck") == @model.id)
-		).length
-		@$(".number-of-cards").text(count)
-
-	showDeck: =>
-		App.navigate("cards/deck/#{@model.id}", true)
+class AllCardsView extends Foundation.CollectionView
 
 
-	remove: =>
-		App.allCardsInDecks.unbind("reset", @updateNumberOfCards)
-		App.allCardsInDecks.unbind("add", @updateNumberOfCards)
-		App.allCardsInDecks.unbind("remove", @updateNumberOfCards)
 
-class Cards.TrashView extends Backbone.View
-
-	render: =>
-		super()
-		$(@el).droppable(
-			tolerance: "pointer"
-			accept: ".card",
-			hoverClass: 'drophover'
-			drop: (event, ui) =>
-				@dropCard(event, ui)
-		)
-
-	dropCard: (event, ui) =>
-		modelId = ui.draggable.data("modelId")
-		modelType = ui.draggable.data("modelType")
-		isProtected = ui.draggable.data("protected")
-		switch modelType
-			when "card"
-				object = App.allCards.get(modelId)
-				if object and not isProtected
-					@showDeleteModal(object)
-			when "cardInDeck"
-				object = App.allCardsInDecks.get(modelId)
-				if object and not isProtected
-					object.destroy()
-		if object and isProtected
-			@showProtectedModal(object)
-
-
-	showDeleteModal: (model) =>
-		modalString = Foundation.getTemplate("tmplDeleteModal")(
-			modelName: model.constructor.name
-			instanceName: model.toString()
-		)
-		deleteModal = $(modalString).modal(
-			keyboard: true,
-			backdrop: true,
-		)
-		deleteModal.bind('hidden', =>
-			deleteModal.remove()
-		)
-		$(".do", deleteModal).click(=>
-			model.destroy()
-			deleteModal.modal("hide")
-		)
-		$(".cancel", deleteModal).click(=>
-			deleteModal.modal("hide")
-		)
-
-		deleteModal.focus()
-		deleteModal.modal("show")
-
-	showProtectedModal: (model) =>
-		modalString = Foundation.getTemplate("tmplProtectedModal")(
-			modelName: model.constructor.name
-			instanceName: model.toString()
-		)
-		protectedModal = $(modalString).modal(
-			keyboard: true,
-			backdrop: true,
-		)
-		protectedModal.bind('hidden', =>
-			protectedModal.remove()
-		)
-		$(".cancel", protectedModal).click(=>
-			protectedModal.modal("hide")
-		)
-		protectedModal.focus()
-		protectedModal.modal("show")
-
-class Cards.ShowCardsMenuView extends Backbone.View
-
-	@itemTemplate: Handlebars.compile("<li><a class='show-menu-item' href='#cards/deck/{{ model.id }}' data-model-id='{{model.id}}'>{{attr.title}}</a></li>")
-
-	shownId: 0
-
-	initialize: =>
-		super()
-		@collection = @options.collection
-		@collection.bind("reset", @render, @)
-		@collection.bind("add", @render, @)
-		@collection.bind("remove", @render, @)
-		@collection.bind("change", @render, @)
-
-	render: =>
-		html = "<li><a class='show-menu-item' href='#cards/all' data-model-id='-1'>All cards</a></li>"
-		for model in @collection.models
-			html += @constructor.itemTemplate(
-				attr: model.toJSON(),
-				model: model
-			)
-		$(@el).html(html)
-
-	remove: =>
-		@collection.unbind("reset", @render)
-		@collection.unbind("add", @render)
-		@collection.unbind("remove", @render)
-		@collection.unbind("change", @render)
-
-
-class Cards.SearchBoxView extends Backbone.View
+class SearchBoxView extends Backbone.View
 
 	events:
 		"keyup input":		"doSearch"
 
-	clear: =>
+	clear: ->
 		@setSearch("")
 
-	setSearch: (term) =>
+	setSearch: (term) ->
 		@$("input").val(term)
 		@doSearch()
 
-	doSearch: (event) =>
+	doSearch: (event) ->
 		term = @$("input").val()
 		if term == ""
-			App.shownView.showAll()
+			app.cards.shownView.showAll()
 		else
 			term = term.toUpperCase()
-			if App.shownView == App.allCardsView
-				App.shownView.hideSome((model)->
+			if app.cards.shownView == app.cards.allCardsView
+				app.cards.shownView.hideSome((model)->
 					title = model.get("title")
 					title = title.toUpperCase()
 					title.indexOf(term)
 				)
-			if App.shownView == App.cardSheetView
-				App.shownView.hideSome((model)->
+			if app.cards.shownView == app.cards.cardSheetView
+				app.cards.shownView.hideSome((model)->
 					title = model.getCard().get("title")
 					title = title.toUpperCase()
 					title.indexOf(term)
 				)
 
-class Cards.CardSheetView extends Foundation.FilteredCollectionView
+class CardSheetView extends Foundation.FilteredCollectionView
 
 	@cardDisplayTemplate = Handlebars.compile("{{attr.title}}")
 
-	initialize: =>
-		@headerView = new Foundation.TemplateView(
+	initialize: ->
+		@headerView = new Foundation.ModelView(
 			tagName: "h2"
 			className: "noprint"
 			template: @constructor.cardDisplayTemplate
+			model: new Deck()
 		)
 		super()
 
-	setDeck:(deck) =>
+	setDeck:(deck) ->
 		@setFilter((model) -> return model.get("deck") == deck.get("id"))
 		@headerView.setModel(deck)
 
 
-class Cards.DeckCollectionView extends Foundation.CollectionView
+class DeckCollectionView extends Foundation.CollectionView
 
 	events:
 		"click .showAllCards"		: "showAllCards"
 		"click .addNewDeck"			: "addNewDeck"
 
-	initialize: =>
+	initialize: ->
 		@modelViewClass = Cards.DeckView
 		@headerView = new Foundation.StaticView(
-			className: "deck display clickable showAllCards noprint"
+			className: "btn-toolbar"
 			content:
-				'<div class="contents">
-					<div class="number-of-cards"></div>
-					<h2 class="title">
-						All Cards
-					</h2>
-				</div>'
+				'<div class="btn showAllCards">Show all <span class="number-of-cards"></span> cards</div><div class="btn addNewDeck">Add deck</div>'
 			)
-		@footerView = new Foundation.StaticView(
-			className: "deck display clickable addNewDeck"
-			content:
-					'<div class="contents">
-						<div class="number-of-cards"></div>
-						<h2 class="title">
-							Add new deck
-						</h2>
-					</div>'
-		)
 		super()
-		App.allCards.bind("reset", @updateNumberOfCards, @)
-		App.allCards.bind("add", @updateNumberOfCards, @)
-		App.allCards.bind("remove", @updateNumberOfCards, @)
+		app.cards.allCards.bind("reset", @updateNumberOfCards, @)
+		app.cards.allCards.bind("add", @updateNumberOfCards, @)
+		app.cards.allCards.bind("remove", @updateNumberOfCards, @)
 
-	render: =>
+	render: ->
 		super()
 		@updateNumberOfCards()
+		@
 
-	showAllCards: =>
-		App.navigate("cards/all", true)
+	showAllCards: ->
+		app.cards.navigate("cards/all", true)
 
-	addNewDeck: =>
-		App.decks.create(
+	addNewDeck: ->
+		app.cards.decks.create(
 			user: currentUserId
 		)
 
-	updateNumberOfCards: =>
-		count = App.allCards.length
+	updateNumberOfCards: ->
+		count = app.cards.allCards.length
 		@$(".showAllCards .number-of-cards").text(count)
 
-	remove: =>
-		App.allCards.unbind("reset", @updateNumberOfCards)
-		App.allCards.unbind("add", @updateNumberOfCards)
-		App.allCards.unbind("remove", @updateNumberOfCards)
+	remove: ->
+		app.cards.allCards.unbind("reset", @updateNumberOfCards)
+		app.cards.allCards.unbind("add", @updateNumberOfCards)
+		app.cards.allCards.unbind("remove", @updateNumberOfCards)
 
 # Router
 
-class Cards.D12Router extends Backbone.Router
+class CardRouter extends Foundation.Router
 
 	routes:
-		"cards/all" :			"showAllCards"
-		"cards/deck/:deck_id" :	"showCardSheet"
+		"/cards/all" :			"showAllCards"
+		"/cards/deck/:deck_id" :	"showCardSheet"
 
-	shownView = null
-
-	setup: =>
-		# General bindings
-		@.bind("form:error", @.showError)
-
-		# Views and general collections
-		@allCards = new Cards.CardCollection()
-		@allCards.fetch()
-
-		@allCardsView = new Foundation.CollectionView({
-			headerView: new Foundation.StaticView(
-				tagName: "h2"
-				className: "noprint"
-				content: "All Cards"
-			)
-			prependNew: true,
-			el: "#allCardsView",
-			collection: @allCards,
-			modelViewClass: Cards.CardView
-		})
-
-		@allCardsInDecks = new Cards.CardInDeckCollection()
-		@allCardsInDecks.fetch()
-
-		@cardsInDeck = new Cards.CardInDeckCollection()
-		@cardSheetView = new Cards.CardSheetView({
-			el: "#cardSheetView",
-			collection: @allCardsInDecks,
-			modelViewClass: Cards.CardInDeckView
-			filter: (model)-> return false
-		})
-
-		@decks = new Cards.DeckCollection()
-		@deckListView = new Cards.DeckCollectionView(
-			el: "#decksView",
-			collection: @decks,
-		)
-		@showMenu = new Cards.ShowCardsMenuView(
-			el: $("#cards-showMenu")
-			collection: @decks
-		)
-		@decks.fetch()
-
-		# Trash can
-		@trashView = new Cards.TrashView(
-			el: "#trashView"
-		)
-		@trashView.render()
-
-		# Navigation bar
-		$("#cards-addCard").click(=>
-			@showAllCards()
-			@allCards.create()
-		)
-
-		$("#cards-refreshCards").click(=>
-			@allCards.fetch()
-			@decks.fetch()
-			@cardsInDeck.fetch()
-		)
-
-		$("#cards-printout").click(=>
-			@printOut()
-		)
-
-		# Search View
-
-		@searchView = new Cards.SearchBoxView({
-			el: $("#cards-searchBox")
-		})
-
-		@shownView = @allCardsView
-
-
-	printOut: =>
-		printout = new Printouts.Printout(
+	printOut: ->
+		printout = new Foundation.Modules.Printouts.Printout(
 			body: $(@shownView.el).html()
 			title: "Cards",
 			filename: "cards.pdf",
 		)
-		printout.save().then(=>
+		printout.save().then(->
 			window.open("/api/export/pdf/#{printout.get("uuid")}/", "_new")
 		)
 
-	showAllCards: =>
-		$(@cardSheetView.el).hide()
-		$(@allCardsView.el).show()
+	showAllCards: ->
+		app.showModule("cards")
+		module.mainView.showAllCards()
 		@shownView = @allCardsView
 		@searchView.clear()
 
-	showCardSheet: (deck_id) =>
+	showCardSheet: (deck_id) ->
+		app.showModule("cards")
 		intId = parseInt(deck_id)
 		deck = @decks.get(deck_id)
 		$(@allCardsView.el).hide()
@@ -532,15 +365,180 @@ class Cards.D12Router extends Backbone.Router
 		@shownView = @cardSheetView
 		@searchView.clear()
 
-	showError: (errorData) =>
+	showError: (errorData) ->
 		$("<div>#{errorData.error}<p><button class='btn cancel'>Ok</button></p></div>").modal(
 			title: "Validation error"
 		)
 
 
-# Initialization
-window.Foundation.inits.push(->
-	window.App = new Cards.D12Router()
-	App.setup()
-	window.location.hash=""
-)
+class NavView extends Foundation.TemplateView
+
+	@template: Handlebars.compile('
+		<li><a href="#/cards/all"><i class="book"></i> All Cards</a></li>
+		<li class="nav-header">Decks</li>
+		{{#each models}}
+		<li><a href="#/cards/deck/{{this.id}}"><i class="file"></i>{{this.attributes.title}}</a></li>
+		{{/each}}
+	')
+
+	activeRow: 0
+
+	render: ->
+		super()
+		@showActiveRow()
+
+	setActiveRow: (newRow) ->
+		@activeRow = newRow
+		@showActiveRow()
+
+	showActiveRow: ->
+		rows = @$("li")
+		for row, i in rows
+			$row = $(row)
+			if i == @activeRow
+				$row.addClass("active")
+			else:
+				$row.removeClass("active")
+
+class CardModuleMainView extends Foundation.ModuleMainView
+
+	className: -> super() + " row-fluid"
+
+	content:
+		'<div class="span2 module-sidebar">
+			<h3>Cards and decks</h3>
+			<div class="well">
+				<ul class="nav list cards-nav-list">
+				</ul>
+			</div>
+			<h3>Functions</h3>
+			<div class="btn-toolbar well cards-toolbar">
+			</div>
+
+		</div>
+		<div class="span10 module-content">
+			<div class="allCardsView"></div>
+			<div class="cardSheetView" style="display:none;"></div>
+		</div>'
+
+	render: ->
+		super()
+		if not @allCardsView
+			@allCardsView = new Foundation.CollectionView({
+				headerView: new Foundation.StaticView(
+					tagName: "h2"
+					className: "noprint"
+					content: "All Cards"
+				)
+				prependNew: true
+				el: @$(".allCardsView")
+				collection: module.cards
+				modelViewClass: CardView
+			})
+
+		if not @cardSheetView
+			@cardSheetView = new CardSheetView({
+				el: @$(".cardSheetView")
+				collection: module.cardsInDecks
+				modelViewClass: CardInDeckView
+				filter: (model)-> return false
+			})
+
+		if not @navView
+			@navView = new NavView({
+				el: @$(".cards-nav-list")
+				model: module.decks
+			})
+
+		if not @toolbarView
+			@toolbarView = new UI.ToolbarView(
+				el: @$(".cards-toolbar")
+				collection: module.tools
+			)
+
+		@allCardsView.render()
+		@cardSheetView.render()
+		@navView.render()
+		@toolbarView.render()
+		@shownView = @allCardsView
+
+
+	showAllCards: ->
+		$(@cardSheetView.el).hide()
+		$(@allCardsView.el).show()
+		@navView.setActiveRow(0)
+		module.tools.reset([
+			{
+				icon: "plus"
+				label: "Add Card"
+				onClick: module.addCard
+			},
+			{
+				icon: "plus"
+				label: "Add Deck"
+				onClick: module.addDeck
+			}
+		])
+
+	showDeck: (deckId) ->
+		deck = module.getDeck(deckId)
+		@cardSheetView.setDeck(deck)
+		@navView.setActiveRow(module.decks.indexOf(deck))
+		$(@cardSheetView.el).show()
+		$(@allCardsView.el).hide()
+
+	remove: ->
+		@allCardsView.remove()
+		@cardSheetView.remove()
+		@navView.remove()
+		@toolbarView.remove()
+
+
+
+class CardController extends Foundation.ModuleController
+
+	name: "cards"
+	label: "Cards"
+
+	initialize: ->
+		module = @
+		@cards = new CardCollection()
+		@cardsInDecks = new CardInDeckCollection()
+		@decks = new DeckCollection()
+		@tools = new UI.ButtonCollection()
+		super()
+
+	setup: ->
+		@mainView = new CardModuleMainView()
+		@mainView.render()
+		@cards.fetch()
+		@cardsInDecks.fetch()
+		@decks.fetch()
+
+	addCard: ->
+		@cards.add(new Card())
+
+	addDeck: ->
+		@decks.add(new Deck())
+
+	addCardInDeck: (card, deck) ->
+		@cardsInDeck.create(
+			card: card.id
+			deck: deck.id
+		)
+
+	getCard: (cardId) ->
+		@cards.get(cardId)
+
+	getDeck: (deckId) ->
+		@deck.get(deckId)
+
+	getCardInDeck: (cardInDeckId) ->
+		@cardsInDecks.get(cardInDeckId)
+
+
+# Exports
+
+Foundation.Modules.Cards =
+	# Attach the CardController to the Foundation.Modules to setup for initialization
+	ModuleController: CardController

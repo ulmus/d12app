@@ -9,8 +9,8 @@ CARD_CATEGORY_CHOICES = (
 )
 
 CARD_TYPE_CHOICES = (
-	("ACTN", "Action"),
-	("MOVE", "Move"),
+	("ACTN", "Primary"),
+	("MOVE", "Movement"),
 	("SPRT", "Support"),
 	("REAC", "Reaction"),
 )
@@ -22,6 +22,8 @@ class Card(models.Model):
 	keywords = fields.JSONField(blank=True, null=True)
 	type = models.CharField(max_length=4, choices=CARD_TYPE_CHOICES, default="ACTN")
 	protected = models.BooleanField(default=False, blank=True)
+	disrupts = models.BooleanField(default=False, blank=True)
+	refresh = models.PositiveSmallIntegerField(default=0, blank=True)
 
 	class Meta:
 		ordering = ("title",)

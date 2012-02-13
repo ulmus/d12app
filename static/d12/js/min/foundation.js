@@ -1,86 +1,45 @@
 (function() {
-  var Foundation, getParams, getUrl, init, methodMap, templateHash, urlError,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  var AppController, Collection, CollectionView, FilteredCollectionView, Model, ModelView, ModuleController, ModuleMainView, Router, StaticView, TemplateView, View, addTemplate, generateTemplates, getTemplate, init, markdownConverter, templateHash,
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-  window.Foundation = Foundation = {};
-
-  window.Foundation.inits = [];
-
-  Foundation.markdownConverter = Markdown.getSanitizingConverter();
-
-  Handlebars.registerHelper("cardActionDisplay", function(abbr) {
-    switch (abbr) {
-      case "ACTN":
-        return "Main";
-      case "MOVE":
-        return "Positioning";
-      case "SPRT":
-        return "Support";
-      case "REAC":
-        return "Reaction";
-    }
-  });
-
-  Handlebars.registerHelper("cardActionClassName", function(abbr) {
-    switch (abbr) {
-      case "ACTN":
-        return "main";
-      case "MOVE":
-        return "positioning";
-      case "SPRT":
-        return "support";
-      case "REAC":
-        return "reaction";
-    }
-  });
-
-  Handlebars.registerHelper("cardCategoryDisplay", function(abbr) {
-    switch (abbr) {
-      case "BASC":
-        return "Basic";
-      case "ADVN":
-        return "Advanced";
-    }
-  });
-
-  Handlebars.registerHelper("cardCategoryDisplaySymbol", function(abbr) {
-    switch (abbr) {
-      case "BASC":
-        return "N";
-      case "ADVN":
-        return "O";
-    }
-  });
+  markdownConverter = Markdown.getSanitizingConverter();
 
   Handlebars.registerHelper("markdown", function(markdownText) {
-    return Foundation.markdownConverter.makeHtml(markdownText);
+    return markdownConverter.makeHtml(markdownText);
   });
 
   Handlebars.registerHelper("collectionCount", function(collection) {
     return collection.length;
   });
 
+  Handlebars.registerHelper("anchor", function(anchorString) {
+    if (anchorString && this.anchors && this.anchors[anchorString]) {
+      return " data-anchor='" + this.anchors[anchorString] + "' ";
+    } else {
+      return "";
+    }
+  });
+
   templateHash = {};
 
-  Foundation.addTemplate = function(templateName, templateString) {
+  addTemplate = function(templateName, templateString) {
     return templateHash[templateName] = Handlebars.compile(templateString);
   };
 
-  Foundation.generateTemplates = function() {
+  generateTemplates = function() {
     var scriptTag, scripts, tag, _i, _len, _results;
     scripts = $("script[type='text/x-template']");
     _results = [];
     for (_i = 0, _len = scripts.length; _i < _len; _i++) {
       scriptTag = scripts[_i];
       tag = $(scriptTag);
-      _results.push(Foundation.addTemplate(tag.attr("id"), tag.html()));
+      _results.push(addTemplate(tag.attr("id"), tag.html()));
     }
     return _results;
   };
 
-  Foundation.getTemplate = function(templateName) {
+  getTemplate = function(templateName) {
     if (templateHash[templateName]) {
       return templateHash[templateName];
     } else {
@@ -89,20 +48,17 @@
     }
   };
 
-  Foundation.generateTemplates();
+  generateTemplates();
 
-  Foundation.Collection = (function(_super) {
+  Collection = (function(_super) {
 
     __extends(Collection, _super);
 
     function Collection() {
-      this.url = __bind(this.url, this);
-      this.unsetParam = __bind(this.unsetParam, this);
-      this.setParam = __bind(this.setParam, this);
-      this.queryParams = __bind(this.queryParams, this);
-      this.initialize = __bind(this.initialize, this);
       Collection.__super__.constructor.apply(this, arguments);
     }
+
+    Collection.storeName = "collection";
 
     Collection.prototype.initialize = function(models, options) {
       options || (options = {});
@@ -130,35 +86,35 @@
 
   })(Backbone.Collection);
 
-  Foundation.Model = (function(_super) {
+  Model = (function(_super) {
 
     __extends(Model, _super);
 
     function Model() {
-      this.url = __bind(this.url, this);
-      this.toJSON = __bind(this.toJSON, this);
-      this.toString = __bind(this.toString, this);
-      this.queryParams = __bind(this.queryParams, this);
       Model.__super__.constructor.apply(this, arguments);
     }
 
-    Model.prototype._params = {};
-
     Model.readonly = [];
+
+    Model.prototype.initialize = function() {
+      this._params = {};
+      return Model.__super__.initialize.call(this);
+    };
 
     Model.prototype.queryParams = function() {
       return this._params;
     };
 
-    Model.prototype.toString = function() {
-      return "model";
+    Model.prototype.setParam = function(key, value) {
+      return this._params[key] = value;
     };
 
-    Model.prototype.toJSON = function() {
-      var attr;
-      attr = _(this.attributes).clone();
-      delete attr.id;
-      return attr;
+    Model.prototype.unsetParam = function(key) {
+      return delete this._params[key];
+    };
+
+    Model.prototype.toString = function() {
+      return "model";
     };
 
     Model.prototype.url = function() {
@@ -173,12 +129,123 @@
 
   })(Backbone.Model);
 
+  Router = (function(_super) {
+
+    __extends(Router, _super);
+
+    function Router() {
+      Router.__super__.constructor.apply(this, arguments);
+    }
+
+    return Router;
+
+  })(Backbone.Router);
+
+  /*
+  The basic Foundation View, includes functionality for handling subViews in the view, including hooks for
+  anchors used among other places in Foundation.TemplateView
+  */
+
+  View = (function(_super) {
+
+    __extends(View, _super);
+
+    function View() {
+      View.__super__.constructor.apply(this, arguments);
+    }
+
+    View.prototype.events = function() {
+      return {};
+    };
+
+    View.prototype.attributes = function() {
+      return {};
+    };
+
+    View.prototype.className = function() {
+      return "";
+    };
+
+    View.prototype.initialize = function() {
+      var _ref;
+      this.childViews = (_ref = this.options.childViews) != null ? _ref : {};
+      return View.__super__.initialize.call(this);
+    };
+
+    View.prototype.addChildView = function(newChildView, options) {
+      if (!newChildView) return null;
+      if (options == null) options = {};
+      _.defaults(options, {
+        render: true,
+        anchor: null,
+        placement: "set"
+      });
+      this.childViews[newChildView.cid] = {
+        view: newChildView,
+        options: options
+      };
+      return newChildView;
+    };
+
+    View.prototype.removeChildView = function(childView) {
+      if (childView) return delete this.childViews[childView.cid];
+    };
+
+    View.prototype.getChildView = function(cid) {
+      var _ref;
+      return (_ref = this.childViews[cid]) != null ? _ref.view : void 0;
+    };
+
+    View.prototype.remove = function() {
+      var childView, cid, _ref, _ref2;
+      _ref = this.childViews;
+      for (cid in _ref) {
+        childView = _ref[cid];
+        if ((_ref2 = childView.view) != null) _ref2.remove();
+      }
+      this.unbind();
+      return View.__super__.remove.call(this);
+    };
+
+    View.prototype.render = function() {
+      var anchorElement, childView, cid, _ref, _results;
+      View.__super__.render.call(this);
+      _ref = this.childViews;
+      _results = [];
+      for (cid in _ref) {
+        childView = _ref[cid];
+        if (childView.options.anchor) {
+          anchorElement = this.$("[data-anchor='" + childView.options.anchor + "']");
+          switch (childView.options.placement) {
+            case "inside":
+              anchorElement.empty();
+              anchorElement.append(childView.view.el);
+              break;
+            case "replace":
+              anchorElement.replaceWith(childView.view.el);
+              break;
+            default:
+              childView.view.setElement(anchorElement);
+          }
+        }
+        if (childView.options.render) {
+          _results.push(childView.view.render());
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
+    return View;
+
+  })(Backbone.View);
+
   Backbone.Form.editors.MultipleSelect = (function(_super) {
 
     __extends(MultipleSelect, _super);
 
     function MultipleSelect() {
-      this.renderOptions = __bind(this.renderOptions, this);
       MultipleSelect.__super__.constructor.apply(this, arguments);
     }
 
@@ -196,7 +263,6 @@
     __extends(ChosenMultipleSelect, _super);
 
     function ChosenMultipleSelect() {
-      this.renderOptions = __bind(this.renderOptions, this);
       ChosenMultipleSelect.__super__.constructor.apply(this, arguments);
     }
 
@@ -214,7 +280,6 @@
     __extends(ChosenSelect, _super);
 
     function ChosenSelect() {
-      this.renderOptions = __bind(this.renderOptions, this);
       ChosenSelect.__super__.constructor.apply(this, arguments);
     }
 
@@ -227,92 +292,168 @@
 
   })(Backbone.Form.editors.Select);
 
-  Foundation.StaticView = (function(_super) {
+  /*
+  A static HTML view for static content, re-rendered on render
+  */
+
+  StaticView = (function(_super) {
 
     __extends(StaticView, _super);
 
     function StaticView() {
-      this.setContent = __bind(this.setContent, this);
-      this.render = __bind(this.render, this);
-      this.initialize = __bind(this.initialize, this);
       StaticView.__super__.constructor.apply(this, arguments);
     }
 
+    StaticView.prototype.content = "";
+
     StaticView.prototype.initialize = function() {
-      this.content = this.options.content;
+      var _ref;
+      this.content = (_ref = this.options.content) != null ? _ref : this.content;
+      this.$el.html(this.content);
       return StaticView.__super__.initialize.call(this);
     };
 
     StaticView.prototype.render = function() {
-      $(this.el).html(this.content);
-      return StaticView.__super__.render.call(this);
+      this.$el.html(this.content);
+      StaticView.__super__.render.call(this);
+      return this;
     };
 
     StaticView.prototype.setContent = function(newContent) {
       this.content = newContent;
+      this.$el.html(this.content);
       return this.render();
     };
 
     return StaticView;
 
-  })(Backbone.View);
+  })(View);
 
-  Foundation.TemplateView = (function(_super) {
+  /*
+  A view with a template, rendering the template content on render using the getContext method to get context to put into
+  the template. Will take compiled template functions as an option.template or as a constructor on a child class.
+  */
+
+  TemplateView = (function(_super) {
 
     __extends(TemplateView, _super);
 
     function TemplateView() {
-      this.remove = __bind(this.remove, this);
-      this.unbindModel = __bind(this.unbindModel, this);
-      this.bindModel = __bind(this.bindModel, this);
-      this.setModel = __bind(this.setModel, this);
-      this.getContext = __bind(this.getContext, this);
-      this.render = __bind(this.render, this);
-      this.initialize = __bind(this.initialize, this);
       TemplateView.__super__.constructor.apply(this, arguments);
     }
 
-    TemplateView.template = $.noop;
-
     TemplateView.prototype.initialize = function() {
-      this.constructor.template = this.options.template ? this.options.template : this.constructor.template;
-      this.bindModel(this.model);
+      var _ref, _ref2, _ref3;
+      this.context = (_ref = this.options.context) != null ? _ref : {};
+      this.template = (_ref2 = (_ref3 = this.options.template) != null ? _ref3 : this.constructor.template) != null ? _ref2 : $.noop;
       return TemplateView.__super__.initialize.call(this);
     };
 
     TemplateView.prototype.render = function() {
-      if (this.model && this.constructor.template) {
-        $(this.el).html(this.constructor.template(this.getContext()));
-      }
-      this.delegateEvents();
-      return TemplateView.__super__.render.call(this);
+      this.$el.html(this.template(this.getContext()));
+      TemplateView.__super__.render.call(this);
+      return this;
     };
 
     TemplateView.prototype.getContext = function() {
-      return {
-        model: this.model,
-        attr: this.model.toJSON()
-      };
+      return this.context;
     };
 
-    TemplateView.prototype.setModel = function(newModel) {
+    return TemplateView;
+
+  })(View);
+
+  /*
+  A TemplateView that takes its context from a model or a collection, if a Model is given in the options, the context
+  is extended with 'model' and 'attr' keys with references to the model instance and its attributes respectively. If the
+  model option points to a collection, the context instead gets the keys 'collection', 'models' and 'attrs' respectively
+  referring to the collection, its models and the model attributes using toJSON on the collection
+  The view is bound to "change", "add", "reset" and "remove" events on the model/collection and will
+  re-render on those events.
+  As a hook for the CollectionView, the ModelView has an "afterAdd" callback that can be overridden to provide functionality
+  for when the modelView is added to a collectionView.
+  */
+
+  ModelView = (function(_super) {
+
+    __extends(ModelView, _super);
+
+    function ModelView() {
+      ModelView.__super__.constructor.apply(this, arguments);
+    }
+
+    ModelView.prototype.className = function() {
+      return "";
+    };
+
+    ModelView.prototype.attributes = function() {
+      return {};
+    };
+
+    ModelView.prototype.initialize = function() {
+      var _ref;
+      this.bindModel(this.model);
+      this.showEditOnNew = (_ref = this.options.showEditOnNew) != null ? _ref : this.showEditOnNew;
+      return ModelView.__super__.initialize.call(this);
+    };
+
+    ModelView.prototype.render = function() {
+      ModelView.__super__.render.call(this);
+      this.setAttributes();
+      return this;
+    };
+
+    ModelView.prototype.setAttributes = function() {
+      var attr;
+      if (this.model) {
+        attr = this.attributes();
+        attr["class"] = this.className();
+        this.$el.attr(attr);
+        this.$el.data("modelId", this.model.id);
+        return this.$el.data("modelCid", this.model.cid);
+      }
+    };
+
+    ModelView.prototype.setClassName = function() {
+      return this.$el;
+    };
+
+    ModelView.prototype.getContext = function() {
+      var context, _ref, _ref2, _ref3, _ref4, _ref5;
+      context = ModelView.__super__.getContext.call(this);
+      if (this.model && this.model instanceof Model) {
+        _.extend(context, {
+          model: this.model,
+          attr: (_ref = (_ref2 = this.model) != null ? _ref2.toJSON() : void 0) != null ? _ref : {}
+        });
+      } else if (this.model instanceof Collection) {
+        _.extend(context, {
+          collection: this.model,
+          models: (_ref3 = this.model) != null ? _ref3.models : void 0,
+          attrs: (_ref4 = (_ref5 = this.model) != null ? _ref5.toJSON() : void 0) != null ? _ref4 : {}
+        });
+      }
+      return context;
+    };
+
+    ModelView.prototype.setModel = function(newModel) {
       this.unbindModel(this.model);
       this.model = newModel;
       this.bindModel(this.model);
       return this.render();
     };
 
-    TemplateView.prototype.bindModel = function(model) {
-      if (model && model instanceof Backbone.Model) {
-        return model.bind("change", this.render);
-      } else if (model instanceof Backbone.Collection) {
-        model.bind("add", this.render);
-        model.bind("reset", this.render);
-        return model.bind("remove", this.render);
+    ModelView.prototype.bindModel = function(model) {
+      if (model && model instanceof Model) {
+        return model.bind("change", this.render, this);
+      } else if (model instanceof Collection) {
+        model.bind("add", this.render, this);
+        model.bind("reset", this.render, this);
+        return model.bind("remove", this.render, this);
       }
     };
 
-    TemplateView.prototype.unbindModel = function(model) {
+    ModelView.prototype.unbindModel = function(model) {
       if (model && model instanceof Backbone.Model) {
         return model.unbind("change", this.render);
       } else if (model instanceof Backbone.Collection) {
@@ -322,175 +463,61 @@
       }
     };
 
-    TemplateView.prototype.remove = function() {
+    ModelView.prototype.remove = function() {
       this.unbindModel(this.model);
-      return TemplateView.__super__.remove.call(this);
+      return ModelView.__super__.remove.call(this);
     };
 
-    return TemplateView;
-
-  })(Backbone.View);
-
-  Foundation.EditableTemplateView = (function(_super) {
-
-    __extends(EditableTemplateView, _super);
-
-    function EditableTemplateView() {
-      this.afterAdd = __bind(this.afterAdd, this);
-      this.editKeyUp = __bind(this.editKeyUp, this);
-      this.commitEdit = __bind(this.commitEdit, this);
-      this.showDisplay = __bind(this.showDisplay, this);
-      this.showEdit = __bind(this.showEdit, this);
-      this.render = __bind(this.render, this);
-      this.delegateEvents = __bind(this.delegateEvents, this);
-      EditableTemplateView.__super__.constructor.apply(this, arguments);
-    }
-
-    EditableTemplateView.modelName = "object";
-
-    EditableTemplateView.prototype.delegateEvents = function() {
-      var events, modelEvents;
-      modelEvents = this.events || {};
-      events = _(modelEvents).clone();
-      _(events).extend({
-        "click .display": "showEdit",
-        "click .edit .cancel": "showDisplay",
-        "click .edit .save": "commitEdit",
-        "submit .editForm": "commitEdit",
-        "keyup .edit": "editKeyUp"
-      });
-      return EditableTemplateView.__super__.delegateEvents.call(this, events);
+    ModelView.prototype.afterAdd = function() {
+      if (this.showEditOnNew && this.model.isNew()) return this.showEdit();
     };
 
-    EditableTemplateView.prototype.render = function() {
-      EditableTemplateView.__super__.render.call(this);
-      return this.form = new Backbone.Form({
-        model: this.model,
-        el: this.$(".editForm")
-      }).render();
-    };
+    return ModelView;
 
-    EditableTemplateView.prototype.showEdit = function() {
-      var _this = this;
-      this.$(".display").addClass("hide").removeClass("show");
-      this.$(".edit").removeClass("hide").addClass("show");
-      this.$(".chosen-select").chosen();
-      setTimeout(function() {
-        return _this.$(".edit").addClass("scale");
-      }, 0);
-      return setTimeout(function() {
-        return _this.$('.edit form :input').eq(0).focus().select();
-      }, 150);
-    };
+  })(TemplateView);
 
-    EditableTemplateView.prototype.showDisplay = function() {
-      var _this = this;
-      this.$(".edit").removeClass("scale");
-      return setTimeout(function() {
-        _this.$(".edit").removeClass("show").addClass("hide");
-        return _this.$(".display").removeClass("hide").addClass("show");
-      }, 150);
-    };
-
-    EditableTemplateView.prototype.commitEdit = function(event) {
-      var error, errors, _i, _len,
-        _this = this;
-      errors = this.form.validate();
-      if (errors) {
-        for (_i = 0, _len = errors.length; _i < _len; _i++) {
-          error = errors[_i];
-          App.trigger("form:error", {
-            form: this.form,
-            view: this,
-            model: this.model,
-            error: error
-          });
-        }
-      } else {
-        this.showDisplay();
-        setTimeout(function() {
-          _this.form.commit();
-          return _this.model.save();
-        }, 150);
-      }
-      return event.preventDefault();
-    };
-
-    EditableTemplateView.prototype.editKeyUp = function(event) {
-      if (event.which === 27) return this.showDisplay();
-    };
-
-    EditableTemplateView.prototype.afterAdd = function() {
-      return this.showEdit();
-    };
-
-    return EditableTemplateView;
-
-  })(Foundation.TemplateView);
-
-  Foundation.CollectionView = (function(_super) {
-    var collection, footerView, headerView, modelViewClass;
+  CollectionView = (function(_super) {
 
     __extends(CollectionView, _super);
 
     function CollectionView() {
-      this.showAll = __bind(this.showAll, this);
-      this.hideSome = __bind(this.hideSome, this);
-      this.setFooterView = __bind(this.setFooterView, this);
-      this.setHeaderView = __bind(this.setHeaderView, this);
-      this.getModelView = __bind(this.getModelView, this);
-      this.removeModel = __bind(this.removeModel, this);
-      this.removeModelView = __bind(this.removeModelView, this);
-      this.addModel = __bind(this.addModel, this);
-      this.addModelView = __bind(this.addModelView, this);
-      this.setup = __bind(this.setup, this);
-      this.remove = __bind(this.remove, this);
-      this.render = __bind(this.render, this);
-      this.getModels = __bind(this.getModels, this);
-      this.unbindCollection = __bind(this.unbindCollection, this);
-      this.bindCollection = __bind(this.bindCollection, this);
-      this.initialize = __bind(this.initialize, this);
       CollectionView.__super__.constructor.apply(this, arguments);
     }
 
+    CollectionView.prototype.modelViewClass = null;
+
     CollectionView.prototype.prependNew = false;
 
-    headerView = null;
-
-    footerView = null;
-
-    collection = null;
-
-    modelViewClass = null;
-
     CollectionView.prototype.initialize = function() {
+      var _ref, _ref2, _ref3, _ref4, _ref5, _ref6;
       _(this.options).defaults({
         prependNew: this.prependNew
       });
       _.defaults(this, {});
-      this.prependNew = this.options.prependNew;
-      this.headerView = this.options.headerView ? this.options.headerView : this.headerView;
-      this.footerView = this.options.footerView ? this.options.footerView : this.footerView;
-      this.collection = this.options.collection ? this.options.collection : this.collection;
-      this.modelViewClass = this.options.modelViewClass ? this.options.modelViewClass : this.modelViewClass;
+      this.prependNew = (_ref = this.options.prependNew) != null ? _ref : this.prependNew;
+      this.headerView = (_ref2 = this.options.headerView) != null ? _ref2 : null;
+      this.footerView = (_ref3 = this.options.footerView) != null ? _ref3 : null;
+      this.collection = (_ref4 = this.options.collection) != null ? _ref4 : null;
+      this.modelViewClass = (_ref5 = this.options.modelViewClass) != null ? _ref5 : this.cmodelViewClass;
+      this.modelViewOptions = (_ref6 = this.options.modelViewOptions) != null ? _ref6 : this.modelViewOptions;
       this.modelViews = {};
-      this.setup;
+      this.setup();
       this.bindCollection(this.collection);
       return CollectionView.__super__.initialize.call(this);
     };
 
     CollectionView.prototype.bindCollection = function(collection) {
-      this.collection.bind("add", this.addModel);
-      this.collection.bind("remove", this.removeModel);
-      this.collection.bind("sort", this.render);
-      return this.collection.bind("reset", this.setup);
+      this.collection.bind("add", this.addModel, this);
+      this.collection.bind("remove", this.removeModel, this);
+      this.collection.bind("sort", this.render, this);
+      return this.collection.bind("reset", this.setupAndRender, this);
     };
 
     CollectionView.prototype.unbindCollection = function(collection) {
-      this.collection.unbind("add", this.addModel);
-      this.collection.unbind("remove", this.removeModel);
-      this.collection.unbind("sort", this.render);
-      return this.collection.unbind("reset", this.setup);
+      this.collection.unbind("add", this.addModel, this);
+      this.collection.unbind("remove", this.removeModel, this);
+      this.collection.unbind("sort", this.render, this);
+      return this.collection.unbind("reset", this.setupAndRender, this);
     };
 
     CollectionView.prototype.getModels = function() {
@@ -498,11 +525,10 @@
     };
 
     CollectionView.prototype.render = function() {
-      var $el, model, view, _i, _len, _ref;
-      $el = $(this.el);
-      $el.empty();
+      var model, view, _i, _len, _ref;
+      this.$el.empty();
       if (this.headerView) {
-        $el.append(this.headerView.el);
+        this.$el.append(this.headerView.el);
         this.headerView.render();
       }
       _ref = this.getModels();
@@ -510,17 +536,19 @@
         model = _ref[_i];
         view = this.modelViews[model.cid];
         if (view) {
-          $el.append(view.el);
+          this.$el.append(view.el);
           view.render();
+          view.delegateEvents();
         } else {
           console && console.log("CollectionViewError: ModelView not found for ", model);
         }
       }
       if (this.footerView) {
-        $el.append(this.footerView.el);
+        this.$el.append(this.footerView.el);
         this.footerView.render();
       }
-      return CollectionView.__super__.render.call(this);
+      CollectionView.__super__.render.call(this);
+      return this;
     };
 
     CollectionView.prototype.remove = function() {
@@ -529,7 +557,7 @@
     };
 
     CollectionView.prototype.setup = function() {
-      var model, view, _i, _j, _len, _len2, _ref, _ref2;
+      var model, view, _i, _j, _len, _len2, _ref, _ref2, _results;
       _ref = this.modelViews;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         view = _ref[_i];
@@ -537,10 +565,16 @@
       }
       this.modelViews = {};
       _ref2 = this.getModels();
+      _results = [];
       for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
         model = _ref2[_j];
-        this.addModelView(model);
+        _results.push(this.addModelView(model));
       }
+      return _results;
+    };
+
+    CollectionView.prototype.setupAndRender = function() {
+      this.setup();
       return this.render();
     };
 
@@ -646,17 +680,13 @@
 
     return CollectionView;
 
-  })(Backbone.View);
+  })(View);
 
-  Foundation.FilteredCollectionView = (function(_super) {
+  FilteredCollectionView = (function(_super) {
 
     __extends(FilteredCollectionView, _super);
 
     function FilteredCollectionView() {
-      this.addModel = __bind(this.addModel, this);
-      this.getModels = __bind(this.getModels, this);
-      this.setFilter = __bind(this.setFilter, this);
-      this.initialize = __bind(this.initialize, this);
       FilteredCollectionView.__super__.constructor.apply(this, arguments);
     }
 
@@ -686,63 +716,104 @@
 
     return FilteredCollectionView;
 
-  })(Foundation.CollectionView);
+  })(CollectionView);
 
-  methodMap = {
-    'create': 'POST',
-    'update': 'PUT',
-    'delete': 'DELETE',
-    'read': 'GET'
-  };
+  ModuleController = (function() {
 
-  getUrl = function(object) {
-    if (!(object && object.url)) return null;
-    if (_.isFunction(object.url)) {
-      return object.url();
-    } else {
-      return object.url;
+    function ModuleController() {}
+
+    ModuleController.name = "module";
+
+    ModuleController.prototype.initialize = function() {
+      this.name = this.constructor.name;
+      return true;
+    };
+
+    ModuleController.prototype.setup = function() {
+      return true;
+    };
+
+    return ModuleController;
+
+  })();
+
+  ModuleMainView = (function(_super) {
+
+    __extends(ModuleMainView, _super);
+
+    function ModuleMainView() {
+      ModuleMainView.__super__.constructor.apply(this, arguments);
     }
-  };
 
-  getParams = function(object) {
-    var key, queryParams, queryString, value;
-    if (!(object && object.url)) return "";
-    queryParams = _.isFunction(object.queryParams) ? object.queryParams() : object.queryParams;
-    queryString = "";
-    if (queryParams && !_.isEmpty(queryParams)) {
-      for (key in queryParams) {
-        value = queryParams[key];
-        queryString = "?" + ("" + key + "=" + value);
+    ModuleMainView.content = "<div class='span2 module-sidebar'></div><div class='span10 module-content'></div>";
+
+    ModuleMainView.prototype.initialize = function() {
+      var _ref;
+      ModuleMainView.__super__.initialize.call(this);
+      this.name = (_ref = this.options.moduleName) != null ? _ref : "module";
+      return $(this.el).attr("id", "module-" + this.name);
+    };
+
+    return ModuleMainView;
+
+  })(StaticView);
+
+  AppController = (function() {
+
+    function AppController() {}
+
+    AppController.prototype.initialize = function() {
+      var Module, moduleName, _ref;
+      this.modules = {};
+      this.modulesContainerElement = $("#app-main");
+      this.modulesNavigationElement = $("#app-nav");
+      _ref = Foundation.Modules;
+      for (moduleName in _ref) {
+        Module = _ref[moduleName];
+        this.registerModule(moduleName, new Module.ModuleController());
       }
-    }
-    return queryString;
-  };
+      if (Backbone.history) return Backbone.history.start();
+    };
 
-  urlError = function() {
-    throw new Error('A "url" property or function must be specified');
-  };
+    AppController.prototype.showModule = function(module) {
+      var aModule, aModuleName, _ref, _results;
+      if (_.isString(module)) module = this.modules[moduleName];
+      _ref = this.modules;
+      _results = [];
+      for (aModuleName in _ref) {
+        aModule = _ref[aModuleName];
+        if (aModule === module) {
+          _results.push($(aModule.mainView.el).show());
+        } else {
+          _results.push($(aModule.mainView.el).hide());
+        }
+      }
+      return _results;
+    };
 
-  Backbone.sync = function(method, model, options) {
-    var params, type;
-    type = methodMap[method];
-    params = _.extend({
-      type: type,
-      dataType: 'json'
-    }, options);
-    if (!params.url) {
-      params.url = getUrl(model) || urlError();
-      params.url += getParams(model);
-    }
-    if (!params.data && model && (method === 'create' || method === 'update')) {
-      params.contentType = 'application/json';
-      params.data = JSON.stringify(model.toJSON());
-    }
-    if (params.type !== 'GET') params.processData = false;
-    return $.ajax(params);
-  };
+    AppController.prototype.registerModule = function(moduleName, module) {
+      this.modules[moduleName] = module;
+      module.initialize();
+      module.setup();
+      if (module.mainView) {
+        $(module.mainView.el).appendTo(this.modulesContainerElement);
+      }
+      if (module.label) {
+        return this.modulesNavigationElement.append("<li><a href='#/" + module.name + "'>" + module.label + "</a></li>");
+      }
+    };
+
+    AppController.prototype.deRegisterModule = function(moduleName) {
+      modules[moduleName] = null;
+      return delete modules[moduleName];
+    };
+
+    return AppController;
+
+  })();
 
   init = function() {
-    var csrfToken, init, _i, _len, _ref;
+    var app, csrfToken;
     csrfToken = $('input[name=csrfmiddlewaretoken]').val();
     $(document).ajaxSend(function(e, xhr, settings) {
       return xhr.setRequestHeader('X-CSRFToken', csrfToken);
@@ -750,14 +821,25 @@
     $.ajaxSetup({
       cache: false
     });
-    _ref = Foundation.inits;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      init = _ref[_i];
-      init();
-    }
-    if (Backbone.history) return Backbone.history.start();
+    app = new AppController();
+    window.app = app;
+    return app.initialize();
   };
 
-  $(document).ready(init);
+  window.Foundation = {
+    Modules: {},
+    Model: Model,
+    Collection: Collection,
+    Router: Router,
+    View: View,
+    TemplateView: TemplateView,
+    ModelView: ModelView,
+    CollectionView: CollectionView,
+    FilteredCollectionView: FilteredCollectionView,
+    StaticView: StaticView,
+    ModuleMainView: ModuleMainView,
+    ModuleController: ModuleController,
+    init: init
+  };
 
 }).call(this);

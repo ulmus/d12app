@@ -141,9 +141,16 @@
         //Field views
         fields: null,
 
-        tagName: 'fieldset',
+        tagName: 'form',
         
-        className: 'bbf-form',
+        className: 'form-horizontal',
+        
+        events: {
+            "submit"  :  "doCommit",
+            "reset"  :  "doCancel",
+        },
+
+        buttonHtml: '<fieldset class="form-actions"><button type="submit" class="btn primary">Save changes</button><button type="reset" class="btn">Cancel</button></fieldset>',
 
         /**
          * @param {Object}  Options
@@ -153,17 +160,22 @@
          *          model   {Backbone.Model} : Use instead of data, and use commit().
          *          data    {Array} : Pass this when not using a model. Use getValue() to get out value
          *          fields  {Array} : Keys of fields to include in the form, in display order (default: all fields)
+         *          legend  {String} : Form legend
          */
         initialize: function(options) {
             this.schema = options.schema || (options.model ? options.model.schema : {}),
             this.model = options.model;
             this.data = options.data;
+            this.legend = options.legend;
             this.fieldsToRender = options.fields || _.keys(this.schema);
             this.fieldsets = options.fieldsets;
             this.idPrefix = options.idPrefix || '';
+            this.showButtons = options.showButtons;
 
             //Stores all Field views
             this.fields = {};
+            
+            _(this).bindAll("doCommit", "doCancel");
         },
 
         /**
@@ -172,16 +184,22 @@
         render: function() {
             var fieldsToRender = this.fieldsToRender,
                 fieldsets = this.fieldsets,
+                legend = this.legend,
                 el = $(this.el),
                 self = this;
 
+            el.empty();
+            if (legend) {
+                el.append($('<legend>').html(legend))
+            }
+            /* Bootstrap does not support fieldsets, it uses them for grouping and layout
             if (fieldsets) {
                 _.each(fieldsets, function (fs) {
                     if (_(fs).isArray()) {
                         fs = {'fields': fs};
                     }
 
-                    var fieldset = $('<fieldset><ul class="unstyled">');
+                    var fieldset = $('<fieldset><ul>');
 
                     if (fs.legend) {
                         fieldset.append($('<legend>').html(fs.legend));
@@ -190,11 +208,14 @@
                     el.append(fieldset);
                 });
             } else {
-                var target = $('<ul class="unstyled">');
+                var target = $('<ul>');
                 el.append(target)
-                this.renderFields(fieldsToRender, target);
+            */
+                this.renderFields(fieldsToRender, el);
+            /*}*/
+            if (this.showButtons){
+                $(this.el).append(this.buttonHtml);                
             }
-
             return this;
         },
 
@@ -322,8 +343,22 @@
                 this.fields[key].setValue(data[key]);
             }
         },
+        
+        doCommit: function(event) {
+            var errors = this.commit();
+            if (errors){
+                this.trigger("form:error", errors);
+            } else {
+                this.trigger("form:commit")
+            }
+            return event.preventDefault();
+        },
 
-        /**
+        doCancel: function(event) {
+            this.trigger("form:cancel")
+        },
+
+       /**
          * Override default remove function in order to remove embedded views
          */
         remove: function() {
@@ -341,9 +376,9 @@
 
     var Field = Backbone.View.extend({
 
-        tagName: 'li',
+        tagName: 'fieldset',
 
-        className: 'bbf-field',
+        className: 'control-group',
 
         events: {
             'click label': 'logValue'
@@ -376,7 +411,7 @@
             var schema = this.schema,
                 el = $(this.el);
 
-            el.addClass('bbf-field' + schema.type);
+            // el.addClass('control-type-' + schema.type);
 
             //Standard options that will go to all editors
             var options = {
@@ -403,7 +438,7 @@
             }));
 
             //Add the editor
-            $('.bbf-editor', el).html(editor.render().el);
+            this.$('.controls').prepend(editor.render().el);
 
             this.editor = editor;
 
@@ -414,7 +449,18 @@
          * Validate the value from the editor
          */
         validate: function() {
-            return this.editor.validate();
+            var error = this.editor.validate(),
+                el = $(this.el),
+                helpInline = el.find('.help-inline');
+            
+            if (error) {
+                el.addClass('error')
+                helpInline.html(error).show()
+            } else {
+                el.removeClass('error')
+                helpInline.html('').hide()           
+            }
+            return error
         },
 
         /**
@@ -440,7 +486,7 @@
         },
 
         logValue: function() {
-            console.log(this.getValue());
+            console && console.log(this.getValue());
         },
 
         remove: function() {
@@ -453,9 +499,8 @@
         
         //Static
         template: helpers.createTemplate('\
-			 <div class="clearfix"></div>\
-             <label for="{{id}}">{{title}}</label>\
-             <div class="bbf-editor input bbf-editor{{type}}"></div>\
+             <label class="control-label" for="{{id}}">{{title}}</label>\
+             <div class="controls control-type-{{type}}"><span class="help-inline hide"></span></div>\
         ')
         
     });
@@ -532,13 +577,7 @@
                 change[this.key] = value;
                 error = this.model.validate(change);
             }
-
-            if (error) {
-                el.addClass('bbf-error');
-            } else {
-                el.removeClass('bbf-error');
-            }
-
+            
             return error;
         },
 
@@ -666,29 +705,36 @@
         
         defaultValue: false,
         
-        tagName: 'input',
+        tagName: 'label',
+        className: 'checkbox',
         
         initialize: function(options) {
             editors.Base.prototype.initialize.call(this, options);
             
-            $(this.el).attr('type', 'checkbox');
-        },
+           if (this.schema && this.schema.optionLabel) {
+               this.optionLabel = this.schema.optionLabel
+            } else {
+                this.optionLabel = ""
+            };
+     },
 
         /**
          * Adds the editor to the DOM
          */
         render: function() {
+            var el = $(this.el);
+            el.html('<input type="checkbox">' + this.optionLabel)
             this.setValue(this.value);
 
             return this;
         },
         
         getValue: function() {
-            return $(this.el).attr('checked') ? true : false;
+            return this.$('input').attr('checked') ? true : false;
         },
         
         setValue: function(value) {
-            $(this.el).attr('checked', value);
+            this.$('input').attr('checked', value);
         }
         
     });
@@ -863,8 +909,8 @@
      */
     editors.Radio = editors.Select.extend({
 
-        tagName: 'ul',
-        className: 'bbf-radio unstyled',
+        tagName: 'label',
+        className: 'radio',
 
         getValue: function() {
             return this.$('input[type=radio]:checked').val();
@@ -885,17 +931,17 @@
             var self = this;
 
             _.each(array, function(option, index) {
-                var itemHtml = '<li>';
+                var itemHtml = '';
                 if (_.isObject(option)) {
                     var val = option.val ? option.val : '';
-                    itemHtml += ('<input type="radio" name="'+self.id+'" value="'+val+'" id="'+self.id+'-'+index+'" />')
-                    itemHtml += ('<label for="'+self.id+'-'+index+'">'+option.label+'</label>')
+                    itemHtml += ('<label for="'+self.id+'-'+index+'"><input type="radio" name="'+self.id+'" value="'+val+'" id="'+self.id+'-'+index+'" />')
+                    itemHtml += (+option.label+'</label>')
                 }
                 else {
-                    itemHtml += ('<input type="radio" name="'+self.id+'" value="'+option+'" id="'+self.id+'-'+index+'" />')
-                    itemHtml += ('<label for="'+self.id+'-'+index+'">'+option+'</label>')
+                    itemHtml += ('<label for="'+self.id+'-'+index+'"><input type="radio" name="'+self.id+'" value="'+option+'" id="'+self.id+'-'+index+'" />')
+                    itemHtml += (+option+'</label>')
                 }
-                itemHtml += '</li>';
+                itemHtml += '';
                 html.push(itemHtml);
             });
 

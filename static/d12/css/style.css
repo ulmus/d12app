@@ -3,7 +3,7 @@
 
 
 body {
-	padding-top: 80px;
+	padding-top: 60px;
 }
 
 .messages {
@@ -18,6 +18,10 @@ body {
 	font-family: 'WebSymbolsRegular' sans-serif;
 }
 
+.relative {
+	position: relative
+}
+
 div.card-sheet {
 	position: relative;
 }
@@ -29,6 +33,8 @@ div.card {
 	position: relative;
 	float:left;
 	page-break-inside: avoid;
+	font-family: "Droid Serif", serif;
+	padding: 3mm;
 }
 
 .ui-draggable-dragging {
@@ -41,7 +47,6 @@ div.card {
 }
 
 div.card .contents {
-	position: absolute;
 	border-radius: 3mm;
 	border: 0.75mm solid black;
 	box-shadow:	2px 2px 5px #333;
@@ -50,6 +55,8 @@ div.card .contents {
 	-ms-transition: all .15s ease-out;
 	transition: all .15s ease-out;
 	background-color: white;
+	width: 100%;
+	height: 100%;
 }
 
 div.card.display .contents {
@@ -57,7 +64,6 @@ div.card.display .contents {
 	left: 2mm;
 	height: 80mm;
 	width: 56mm;
-	font-family: "Droid Serif", serif;
 }
 
 div.card.edit .contents {
@@ -113,8 +119,8 @@ div.edit input[type="checkbox"], div.edit input[type="radio"] {
 
 div.contents .lock {
 	position: absolute;
-	right: 2.5mm;
-	top: 5mm;
+	right: 5mm;
+	top: 3mm;
 	font-size: 10px;
 }
 
@@ -126,7 +132,7 @@ div.card.editable:hover .contents {
 	box-shadow:	0px 0px 18px #f8c466 !important;
 }
 
-div.card .contents.main {
+div.card .contents.primary {
 	background-color: rgb(199,4,4);
 	background-image: linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
 	background-image: -o-linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
@@ -135,7 +141,7 @@ div.card .contents.main {
 	background-image: -ms-linear-gradient(bottom, rgb(117,0,0) 9%, rgb(199,4,4) 41%);
 }
 
-div.card .contents.positioning {
+div.card .contents.movement {
 	background-color: rgb(8,110,199);
 	background-image: linear-gradient(bottom, rgb(0,52,115) 9%, rgb(8,110,199) 41%);
 	background-image: -o-linear-gradient(bottom, rgb(0,52,115) 9%, rgb(8,110,199) 41%);
@@ -167,9 +173,9 @@ div.card .contents .title {
 	font-family: "Droid Sans", sans-serif;
 	font-weight: bold;
 	position: absolute;
-	top: 0.7mm;
-	left: 4.5mm;
-	width: 46mm;
+	top: 4mm;
+	left: 8mm;
+	width: 52mm;
 	height: 8mm;
 	display: block;
 	padding: 0mm;
@@ -189,7 +195,7 @@ div.card .contents .title {
 
 div.card .contents .cardtext {
 	font-family: "Droid Serif", serif;
-	height: 62mm;
+	height: 69mm;
 	width: auto;
 	border-radius: 3mm;
 	border: 0.75mm solid black;
@@ -265,16 +271,15 @@ div.card .contents .icons.right li {
 }
 
 div.deck-list {
-	width: 160px;
+	width: 210px;
 	overflow-y: scroll;
 	height: 100%;
 }
 
 div.deck {
-	/*font-family: 'Expletus Sans', sans-serif;*/
 	font-size: 12pt;
-	height: 44mm;
-	width: 36.5mm;
+	height: 30mm;
+	width: 24.5mm;
 	position: relative;
 	float:left;
 	page-break-inside: avoid;
@@ -295,8 +300,8 @@ div.deck .contents {
 
 
 div.deck.display .contents {
-	height: 42mm;
-	width: 29.5mm;
+	height: 28mm;
+	width: 22.5mm;
 }
 
 div.deck.edit .contents {
@@ -324,21 +329,22 @@ div.deck.edit.scale .contents {
 
 div.deck .contents .title {
 	position: absolute;
-	top: 31mm;
+	top: 17mm;
 	left: 2mm;
-	width: 25mm;
+	right: 2mm;
 	height: 6mm;
 	text-align: center;
 	font-size: 8pt;
+	line-height: 10pt;
 	font-style: italic;
 	color: #666;
 }
 
 div.deck .number-of-cards {
 	position: absolute;
-	top: 17mm;
+	top: 8mm;
 	width: 100%;
-	font-size: 17mm;
+	font-size: 8mm;
 	text-align: center;
 	opacity: 0.2;
 }
@@ -352,7 +358,7 @@ div.fixed {
 }
 
 div.card textarea {
-	height: 40mm;
+	height: 25mm;
 }
 div.sidebar {
 	width: 88px;
@@ -375,4 +381,21 @@ div.login {
 @media only screen and (max-device-width: 480px) {
 	.topbar { position: absolute !important; }
 	.fixed {position: inherit !important;}
+}
+
+/* Additions to the bootstrap */
+
+.fluid-sidebar .btn-toolbar .btn {
+	width: 145px;
+	margin: 5px;
+}
+
+.fluid-sidebar .btn-toolbar input {
+	width: 135px;
+	margin: 5px 5px 10px 5px;
+	line-height: 13px;
+}
+
+.btn-left {
+	float: left !important;
 }
