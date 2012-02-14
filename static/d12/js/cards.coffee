@@ -56,37 +56,47 @@ class Card extends Foundation.Model
 		keywords		: []
 		
 	schema: ->
-		title:
-			type: "Text"
-			title: "Title"
-		category:
-			type: "Select"
-			title: "Card Category"
-			options: [
-				{val: "BASC", label: "Basic"},
-				{val: "ADVN", label: "Advanced"},
-			]
-		body:
-			type: "TextArea"
-			title: "Card Text"
-		type:
-			type: "Select"
-			title: "Card Type"
-			options: [
-				{val: "ACTN", label: "Main"},
-				{val: "MOVE", label: "Positioning"},
-				{val: "SPRT", label: "Support"},
-				{val: "REAC", label: "Reaction"},				
-			]
-		disrupts:
-			type: "Checkbox"
-			title: "Disrupts"
-		refresh:
-			type: "Number"
-			title: "Refresh"
-		protected:
-			type: "Checkbox"
-			title: "Protected"
+		schema =
+			title:
+				type: "Text"
+				title: "Title"
+			category:
+				type: "Select"
+				title: "Card Category"
+				options: [
+					{val: "BASC", label: "Basic"},
+					{val: "ADVN", label: "Advanced"},
+				]
+			body:
+				type: "TextArea"
+				title: "Card Text"
+			type:
+				type: "Select"
+				title: "Card Type"
+				options: [
+					{val: "ACTN", label: "Main"},
+					{val: "MOVE", label: "Positioning"},
+					{val: "SPRT", label: "Support"},
+					{val: "REAC", label: "Reaction"},
+				]
+			disrupts:
+				type: "Checkbox"
+				title: "Disrupts"
+			refresh:
+				type: "Number"
+				title: "Refresh"
+
+		if currentUserIsAdmin
+			schema["protected"] =
+				type: "Checkbox"
+				title: "Protected"
+		schema
+
+	canUpdate: ->
+		currentUserIsAdmin or not @get("protected")
+
+	canDelete: ->
+		currentUserIsAdmin or not @get("protected")
 
 	toString: ->
 		@get("title")
@@ -119,6 +129,15 @@ class Deck extends Foundation.Model
 
 	toString: ->
 		@get("title")
+
+	mine: ->
+		@get("user") == currentUserId
+
+	canDelete: ->
+		@mine() or currentUserIsAdmin
+
+	canUpdate: ->
+		@mine() or currentUserIsAdmin
 
 
 class DeckCollection extends Foundation.Collection
@@ -155,9 +174,9 @@ class CardInDeckCollection extends Foundation.Collection
 # VIEWS                #
 ########################
 
-class CardView extends UI.EditableModelView
+class CardView extends Foundation.ModelView
 
-	className: -> super() + " card"
+	className: -> super() + " card clickable"
 
 	@template: Handlebars.compile('
 		<div class="contents {{cardActionClassName attr.type}}">
@@ -183,18 +202,19 @@ class CardView extends UI.EditableModelView
 
 	@modelName = "card"
 
-	showEditOnNew: true
-
 	events: ->
 		events = super()
-		_.extend(events, "click" : "showEdit")
+		_.extend(events, "click" : "editCard")
 		events
+
+	editCard: ->
+		UI.editModel(this.model)
 
 
 
 class CardInDeckView extends Foundation.ModelView
 
-	className: "card"
+	className: -> super() + "card clickable"
 
 	@template: Handlebars.compile('
 			<div class="contents {{cardActionClassName card.attributes.type}}">
@@ -218,6 +238,11 @@ class CardInDeckView extends Foundation.ModelView
 			</div>
 	')
 
+	events: ->
+		events = super()
+		_.extend(events, "click" : "removeFromDeck")
+		events
+
 	getContext: ->
 		return {
 			attr: @model.toJSON()
@@ -238,11 +263,15 @@ class CardInDeckView extends Foundation.ModelView
 		)
 		@
 
+	removeFromDeck: ->
+		if confirm("Remove card from deck?")
+			@model.destroy()
+
 class AllCardsView extends Foundation.CollectionView
 
 
 
-class SearchBoxView extends Backbone.View
+class SearchBoxView extends Foundation.View
 
 	events:
 		"keyup input":		"doSearch"
@@ -275,10 +304,10 @@ class SearchBoxView extends Backbone.View
 
 class CardSheetView extends Foundation.FilteredCollectionView
 
-	@cardDisplayTemplate = Handlebars.compile("{{attr.title}}")
+	@cardDisplayTemplate = Handlebars.compile("{{attr.title}} <small>{{#if attr.description}}{{attr.description}}{{else}}&nbsp;{{/if}}</small>")
 
 	initialize: ->
-		@headerView = new Foundation.ModelView(
+		@options.headerView = new Foundation.ModelView(
 			tagName: "h2"
 			className: "noprint"
 			template: @constructor.cardDisplayTemplate
@@ -287,56 +316,17 @@ class CardSheetView extends Foundation.FilteredCollectionView
 		super()
 
 	setDeck:(deck) ->
-		@setFilter((model) -> return model.get("deck") == deck.get("id"))
+		@deck = deck
+		@setFilter((model) => return model.get("deck") == deck.get("id"))
 		@headerView.setModel(deck)
 
-
-class DeckCollectionView extends Foundation.CollectionView
-
-	events:
-		"click .showAllCards"		: "showAllCards"
-		"click .addNewDeck"			: "addNewDeck"
-
-	initialize: ->
-		@modelViewClass = Cards.DeckView
-		@headerView = new Foundation.StaticView(
-			className: "btn-toolbar"
-			content:
-				'<div class="btn showAllCards">Show all <span class="number-of-cards"></span> cards</div><div class="btn addNewDeck">Add deck</div>'
-			)
-		super()
-		app.cards.allCards.bind("reset", @updateNumberOfCards, @)
-		app.cards.allCards.bind("add", @updateNumberOfCards, @)
-		app.cards.allCards.bind("remove", @updateNumberOfCards, @)
-
-	render: ->
-		super()
-		@updateNumberOfCards()
-		@
-
-	showAllCards: ->
-		app.cards.navigate("cards/all", true)
-
-	addNewDeck: ->
-		app.cards.decks.create(
-			user: currentUserId
-		)
-
-	updateNumberOfCards: ->
-		count = app.cards.allCards.length
-		@$(".showAllCards .number-of-cards").text(count)
-
-	remove: ->
-		app.cards.allCards.unbind("reset", @updateNumberOfCards)
-		app.cards.allCards.unbind("add", @updateNumberOfCards)
-		app.cards.allCards.unbind("remove", @updateNumberOfCards)
 
 # Router
 
 class CardRouter extends Foundation.Router
 
 	routes:
-		"/cards/all" :			"showAllCards"
+		"/cards" :					"showAllCards"
 		"/cards/deck/:deck_id" :	"showCardSheet"
 
 	printOut: ->
@@ -350,20 +340,13 @@ class CardRouter extends Foundation.Router
 		)
 
 	showAllCards: ->
-		app.showModule("cards")
+		app.showModule("Cards")
 		module.mainView.showAllCards()
-		@shownView = @allCardsView
-		@searchView.clear()
 
 	showCardSheet: (deck_id) ->
-		app.showModule("cards")
+		app.showModule("Cards")
 		intId = parseInt(deck_id)
-		deck = @decks.get(deck_id)
-		$(@allCardsView.el).hide()
-		@cardSheetView.setDeck(deck)
-		$(@cardSheetView.el).show()
-		@shownView = @cardSheetView
-		@searchView.clear()
+		module.mainView.showDeck(intId)
 
 	showError: (errorData) ->
 		$("<div>#{errorData.error}<p><button class='btn cancel'>Ok</button></p></div>").modal(
@@ -371,17 +354,24 @@ class CardRouter extends Foundation.Router
 		)
 
 
-class NavView extends Foundation.TemplateView
+class NavView extends Foundation.ModelView
+
+	className: ->
+		"nav nav-list"
 
 	@template: Handlebars.compile('
-		<li><a href="#/cards/all"><i class="book"></i> All Cards</a></li>
+		<li><a href="#/cards"><i class="icon-book"></i> All Cards</a></li>
 		<li class="nav-header">Decks</li>
 		{{#each models}}
-		<li><a href="#/cards/deck/{{this.id}}"><i class="file"></i>{{this.attributes.title}}</a></li>
+		<li><a href="#/cards/deck/{{#if this.id}}{{this.id}}{{/if}}"><i class="icon-file"></i>{{this.attributes.title}}{{#if this.mine}} <em>[Your Deck]</em>{{/if}}</a></li>
 		{{/each}}
 	')
 
 	activeRow: 0
+
+	initialize: ->
+		super()
+		@model.bind("remove", @gotoAllCards, @)
 
 	render: ->
 		super()
@@ -397,8 +387,11 @@ class NavView extends Foundation.TemplateView
 			$row = $(row)
 			if i == @activeRow
 				$row.addClass("active")
-			else:
+			else
 				$row.removeClass("active")
+
+	gotoAllCards: ->
+		module.router.navigate("/cards", {trigger: true})
 
 class CardModuleMainView extends Foundation.ModuleMainView
 
@@ -407,12 +400,9 @@ class CardModuleMainView extends Foundation.ModuleMainView
 	content:
 		'<div class="span2 module-sidebar">
 			<h3>Cards and decks</h3>
-			<div class="well">
-				<ul class="nav list cards-nav-list">
-				</ul>
-			</div>
-			<h3>Functions</h3>
-			<div class="btn-toolbar well cards-toolbar">
+			<ul class="nav nav-list side-nav-list">
+			</ul>
+			<div class="btn-toolbar side-toolbar well">
 			</div>
 
 		</div>
@@ -446,13 +436,14 @@ class CardModuleMainView extends Foundation.ModuleMainView
 
 		if not @navView
 			@navView = new NavView({
-				el: @$(".cards-nav-list")
+				el: @$(".side-nav-list")
 				model: module.decks
 			})
 
 		if not @toolbarView
 			@toolbarView = new UI.ToolbarView(
-				el: @$(".cards-toolbar")
+				el: @$(".side-toolbar")
+				modelViewClass: UI.ButtonView
 				collection: module.tools
 			)
 
@@ -461,7 +452,20 @@ class CardModuleMainView extends Foundation.ModuleMainView
 		@navView.render()
 		@toolbarView.render()
 		@shownView = @allCardsView
+		@addToDeckButtons = new UI.ButtonCollection()
+		@resetAddToDeckButtons()
+		module.cards.on("add remove change reset", @resetAddToDeckButtons, @)
 
+
+	resetAddToDeckButtons: ->
+		buttons = module.cards.map((card)=>
+			new UI.Button(
+				label: card.get("title")
+				onClick: =>
+					module.addCardInDeck(card, @cardSheetView.deck)
+			)
+		)
+		@addToDeckButtons.reset(buttons)
 
 	showAllCards: ->
 		$(@cardSheetView.el).hide()
@@ -471,21 +475,40 @@ class CardModuleMainView extends Foundation.ModuleMainView
 			{
 				icon: "plus"
 				label: "Add Card"
-				onClick: module.addCard
+				onClick: ->
+					module.addCard()
 			},
 			{
 				icon: "plus"
 				label: "Add Deck"
-				onClick: module.addDeck
+				onClick: ->
+					module.addDeck()
 			}
 		])
 
 	showDeck: (deckId) ->
 		deck = module.getDeck(deckId)
-		@cardSheetView.setDeck(deck)
-		@navView.setActiveRow(module.decks.indexOf(deck))
-		$(@cardSheetView.el).show()
-		$(@allCardsView.el).hide()
+		if deck
+			@cardSheetView.setDeck(deck)
+			@navView.setActiveRow(module.decks.indexOf(deck)+2)
+			@cardSheetView.$el.show()
+			@allCardsView.$el.hide()
+			module.tools.reset([
+				{
+					icon: "plus"
+					label: "Add to Deck"
+					type: "dropdown"
+					menu: @addToDeckButtons
+				},
+				{
+					icon: "pencil"
+					label: "Edit Deck"
+					onClick: ->
+						UI.editModel(deck)
+				}
+			])
+		else
+			module.router.navigate("/cards",{trigger:true})
 
 	remove: ->
 		@allCardsView.remove()
@@ -497,8 +520,9 @@ class CardModuleMainView extends Foundation.ModuleMainView
 
 class CardController extends Foundation.ModuleController
 
-	name: "cards"
+	path: "/cards"
 	label: "Cards"
+	start: true
 
 	initialize: ->
 		module = @
@@ -514,15 +538,20 @@ class CardController extends Foundation.ModuleController
 		@cards.fetch()
 		@cardsInDecks.fetch()
 		@decks.fetch()
+		@router = new CardRouter()
 
 	addCard: ->
-		@cards.add(new Card())
+		card = new Card()
+		UI.editModel(card)
+		@cards.add(card)
 
 	addDeck: ->
-		@decks.add(new Deck())
+		deck = new Deck(user: currentUserId)
+		UI.editModel(deck)
+		@decks.add(deck, silent: true)
 
 	addCardInDeck: (card, deck) ->
-		@cardsInDeck.create(
+		@cardsInDecks.create(
 			card: card.id
 			deck: deck.id
 		)
@@ -531,7 +560,7 @@ class CardController extends Foundation.ModuleController
 		@cards.get(cardId)
 
 	getDeck: (deckId) ->
-		@deck.get(deckId)
+		@decks.get(deckId)
 
 	getCardInDeck: (cardInDeckId) ->
 		@cardsInDecks.get(cardInDeckId)

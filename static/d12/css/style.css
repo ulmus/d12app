@@ -22,6 +22,10 @@ body {
 	position: relative
 }
 
+.clickable {
+	cursor: pointer;
+}
+
 div.card-sheet {
 	position: relative;
 }
@@ -363,14 +367,13 @@ div.card textarea {
 div.sidebar {
 	width: 88px;
 }
-div.cards-toolbar-trash {
-	width: 84px;
-	height: 84px;
-	background-image: url("/static/d12/media/trash.png");
+
+div.side-toolbar > div {
+	margin-bottom: 5px;
 }
 
-div.cards-toolbar-trash.drophover {
-	background-image: url("/static/d12/media/trash_glow.png") !important;
+div.side-toolbar .btn {
+	text-align: left;
 }
 
 div.login {

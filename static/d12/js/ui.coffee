@@ -30,6 +30,7 @@ class ModalView extends Foundation.TemplateView
 
 	fade: true
 	okOnAltReturn: false
+	removeOnHide: false
 
 	className: ->
 		className = super() + " modal"
@@ -54,22 +55,8 @@ class ModalView extends Foundation.TemplateView
 
 	initialize: ->
 		super()
-		defaultButtons = [
-			{
-				label: "OK",
-				buttonClass: "primary"
-				onClick: =>
-					@trigger("modal:ok")
-			}
-			{
-				label: "Cancel",
-				onClick: =>
-					@trigger("modal:cancel")
-					@hideModal()
-			}
-		]
 		@fade = @options.fade
-		@buttons = new ButtonCollection(@options.buttons ? defaultButtons)
+		@buttons = new ButtonCollection(@options.buttons ? @getButtons())
 		@header = @options.header ? "Modal"
 		@bodyView = @addChildView(@options.bodyView, anchor : "bodyView", placement:"inside")
 		@footerView = @addChildView(new Foundation.CollectionView(
@@ -77,6 +64,9 @@ class ModalView extends Foundation.TemplateView
 			modelViewClass : ButtonView
 		), anchor : "footerView")
 		@okOnAltReturn = @options.okOnAltReturn ? @okOnAltReturn
+		@removeOnHide = @options.removeOnHide ? @removeOnHide
+		@on("modal:ok", @okModal, @)
+		@on("modal:close", @closeModal, @)
 
 	keydown: (event) ->
 		switch event.which
@@ -91,6 +81,21 @@ class ModalView extends Foundation.TemplateView
 			when 18
 				@altPressed = false
 
+	getButtons: ->
+		[
+			{
+				label: "OK",
+				buttonClass: "primary"
+				onClick: =>
+					@trigger("modal:ok")
+			}
+			{
+				label: "Cancel",
+				onClick: =>
+					@trigger("modal:close")
+			}
+		]
+
 	getContext: ->
 		context = super()
 		_.extend(context, header: @header)
@@ -101,19 +106,75 @@ class ModalView extends Foundation.TemplateView
 			keyboard: true
 		)
 
+	okModal: ->
+		@hideModal()
+
+	closeModal: ->
+		@hideModal()
+
 	hideModal: ->
 		@$el.modal("hide")
+		if @removeOnHide
+			@remove()
 
+
+class ModalEditView extends ModalView
+
+	okOnAltReturn: true
+
+	initialize: ->
+		@options.header = "Edit #{@model.constructor.name}"
+		@formView = @options.bodyView = new Backbone.Form(
+			model: @model
+		)
+		super()
+
+	getButtons: ->
+		buttons = [
+			{
+				label: "Save [alt+enter]",
+				buttonClass: "btn-primary"
+				onClick:(modal) =>
+					@trigger("modal:ok")
+			}
+			{
+				label: "Close",
+				onClick: (modal) =>
+					@trigger("modal:close")
+			}
+		]
+		if @model.canDelete()
+			buttons.push(
+				{
+					label: "Delete",
+					buttonClass: "btn-danger btn-left"
+					onClick: (modal) =>
+						if confirm("Delete #{@model.constructor.name}?")
+							@model.destroy()
+						@trigger("modal:close")
+				}
+			)
+		buttons
+
+	okModal: ->
+		errors = @formView.commit()
+		if not errors
+			@model.save()
+			@hideModal()
+
+	showModal: ->
+		super()
+		@bodyView.$el.find(":input").first().focus()
 
 
 class ButtonView extends Foundation.ModelView
 
-	@template: Handlebars.compile('<a href="#" title="{{attr.label}}" class="btn {{attr.buttonClass}} {{#unless attr.enabled}}disabled{{/unless}}">{{#if attr.icon}}<i class="{{attr.icon}}"></i>{{/if}}{{attr.label}}</a>')
+	@template: Handlebars.compile('<a href="#" title="{{attr.label}}" class="btn {{attr.buttonClass}} {{#unless attr.enabled}}disabled{{/unless}}">{{#if attr.icon}}<i class="icon-{{attr.icon}}"></i> {{/if}}{{attr.label}}</a>')
 	@dropDownTemplate: Handlebars.compile('<div class="btn-group">
-		<a href="#" title="{{attr.label}}" class="btn dropdown-toggle {{attr.buttonClass}} {{#unless attr.enabled}}disabled{{/unless}}">{{#if attr.icon}}<i class="{{attr.icon}}"></i>{{/if}}{{attr.label}} <span class="caret"></span></a>
+		<a href="#" title="{{attr.label}}" class="btn dropdown-toggle {{attr.buttonClass}} {{#unless attr.enabled}}disabled{{/unless}}">{{#if attr.icon}}<i class="icon-{{attr.icon}}"></i> {{/if}}{{attr.label}} <span class="caret"></span></a>
 		<ul class="dropdown-menu">
 		{{#each attr.menu.models}}
-			<li><a href="#" title="{{this.attributes.label}}" data-menuitem-cid="{{this.cid}}" class="menu-item {{#unless this.attributes.enabled}}disabled{{/unless}}">{{#if this.attributes.icon}}<i class="{{this.attributes.icon}}"></i>{{/if}}{{this.attributes.label}}</a>
+			<li><a href="#" title="{{this.attributes.label}}" data-menuitem-cid="{{this.cid}}" class="menu-item {{#unless this.attributes.enabled}}disabled{{/unless}}">{{#if this.attributes.icon}}<i class="icon-{{this.attributes.icon}}"></i> {{/if}}{{this.attributes.label}}</a>
 		{{/each}}
 		</ul>
 		</div>')
@@ -148,16 +209,6 @@ class ButtonView extends Foundation.ModelView
 		event.preventDefault()
 
 
-class WithButtonView extends Foundation.View
-
-	className: -> "relative"
-
-	initialize: ->
-		super()
-		@addChildView(@options.mainView)
-		@addChildView(new ButtonView(className: "anchored-button", model: @options.button))
-
-
 class ToolbarView extends Foundation.CollectionView
 
 	className: "btn-toolbar well"
@@ -175,57 +226,33 @@ class EditableModelView extends Foundation.ModelView
 
 	render: ->
 		if not @formModal
-			@formView = new Backbone.Form(
+			@formModal = new ModalEditView(
 				model: @model
 			)
-			@formModal = new ModalView(
-				header: "Edit #{@model.constructor.name}",
-				bodyView: @formView
-				okOnAltReturn: true
-				buttons: [
-					{
-						label: "OK [alt+enter]",
-						buttonClass: "btn-primary"
-						onClick:(modal) =>
-							@hideEditAndSave()
-					}
-					{
-						label: "Delete",
-						buttonClass: "btn-danger btn-left"
-						onClick: (modal) =>
-							if confirm("Delete #{@model.constructor.name}?")
-								@model.destroy()
-							@hideEdit()
-					}
-					{
-						label: "Cancel",
-						onClick: (modal) =>
-							@hideEdit()
-					}
-				]
-			)
-			@formModal.bind("modal:ok", @hideEditAndSave, @)
 			@formModal.render()
 		super()
+		if @model.canUpdate()
+			@$el.addClass("clickable")
 
 	showEdit: ->
-		@formView?.render()
-		@formModal?.showModal()
-		@formView.$el.find(":input").first().focus()
+		if @model.canUpdate()
+			@formModal?.showModal()
 
 	hideEdit: ->
 		@formModal?.hideModal()
-
-	hideEditAndSave: ->
-		errors = @formView?.commit()
-		if not errors
-			@model.save()
-			@hideEdit()
 
 	afterAdd: ->
 		if @showEditOnNew and @model.isNew()
 			@showEdit()
 
+
+editModel = (model) ->
+	modal = new ModalEditView(
+		model: model
+		removeOnHide: true
+	)
+	modal.render()
+	modal.showModal()
 
 Foundation.UI = {
 	Button : Button
@@ -233,5 +260,7 @@ Foundation.UI = {
 	ButtonView : ButtonView
 	ToolbarView : ToolbarView
 	ModalView : ModalView
+	ModalEditView : ModalEditView
+	editModel: editModel
 	EditableModelView : EditableModelView
 }

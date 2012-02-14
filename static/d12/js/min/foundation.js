@@ -96,6 +96,8 @@
 
     Model.readonly = [];
 
+    Model.prototype.schema = {};
+
     Model.prototype.initialize = function() {
       this._params = {};
       return Model.__super__.initialize.call(this);
@@ -123,6 +125,22 @@
       } else {
         return this.rootUrl + this.id;
       }
+    };
+
+    Model.prototype.canUpdate = function() {
+      return true;
+    };
+
+    Model.prototype.canDelete = function() {
+      return true;
+    };
+
+    Model.prototype.canCreate = function() {
+      return true;
+    };
+
+    Model.prototype.canRead = function() {
+      return true;
     };
 
     return Model;
@@ -407,7 +425,7 @@
       var attr;
       if (this.model) {
         attr = this.attributes();
-        attr["class"] = this.className();
+        attr["class"] = _.isFunction(this.className) ? this.className() : this.className;
         this.$el.attr(attr);
         this.$el.data("modelId", this.model.id);
         return this.$el.data("modelCid", this.model.cid);
@@ -419,7 +437,7 @@
     };
 
     ModelView.prototype.getContext = function() {
-      var context, _ref, _ref2, _ref3, _ref4, _ref5;
+      var context, _ref, _ref2, _ref3;
       context = ModelView.__super__.getContext.call(this);
       if (this.model && this.model instanceof Model) {
         _.extend(context, {
@@ -429,8 +447,7 @@
       } else if (this.model instanceof Collection) {
         _.extend(context, {
           collection: this.model,
-          models: (_ref3 = this.model) != null ? _ref3.models : void 0,
-          attrs: (_ref4 = (_ref5 = this.model) != null ? _ref5.toJSON() : void 0) != null ? _ref4 : {}
+          models: (_ref3 = this.model) != null ? _ref3.models : void 0
         });
       }
       return context;
@@ -447,6 +464,7 @@
       if (model && model instanceof Model) {
         return model.bind("change", this.render, this);
       } else if (model instanceof Collection) {
+        model.bind("change", this.render, this);
         model.bind("add", this.render, this);
         model.bind("reset", this.render, this);
         return model.bind("remove", this.render, this);
@@ -457,6 +475,7 @@
       if (model && model instanceof Backbone.Model) {
         return model.unbind("change", this.render);
       } else if (model instanceof Backbone.Collection) {
+        model.bind("change", this.render);
         model.unbind("add", this.render);
         model.unbind("reset", this.render);
         return model.unbind("remove", this.render);
@@ -701,7 +720,7 @@
 
     FilteredCollectionView.prototype.setFilter = function(filter) {
       this.filter = filter;
-      return this.setup();
+      return this.setupAndRender();
     };
 
     FilteredCollectionView.prototype.getModels = function() {
@@ -767,17 +786,19 @@
       this.modules = {};
       this.modulesContainerElement = $("#app-main");
       this.modulesNavigationElement = $("#app-nav");
+      this.startPath = "#/";
       _ref = Foundation.Modules;
       for (moduleName in _ref) {
         Module = _ref[moduleName];
         this.registerModule(moduleName, new Module.ModuleController());
       }
-      if (Backbone.history) return Backbone.history.start();
+      if (Backbone.history) Backbone.history.start();
+      return window.location.hash = this.startPath;
     };
 
     AppController.prototype.showModule = function(module) {
       var aModule, aModuleName, _ref, _results;
-      if (_.isString(module)) module = this.modules[moduleName];
+      if (_.isString(module)) module = this.modules[module];
       _ref = this.modules;
       _results = [];
       for (aModuleName in _ref) {
@@ -799,8 +820,9 @@
         $(module.mainView.el).appendTo(this.modulesContainerElement);
       }
       if (module.label) {
-        return this.modulesNavigationElement.append("<li><a href='#/" + module.name + "'>" + module.label + "</a></li>");
+        this.modulesNavigationElement.append("<li><a href='#" + module.path + "'>" + module.label + "</a></li>");
       }
+      if (module.start) return this.startPath = module.path;
     };
 
     AppController.prototype.deRegisterModule = function(moduleName) {

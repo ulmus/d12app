@@ -70,6 +70,8 @@ class Model extends Backbone.Model
 
 	@readonly: []
 
+	schema: {}
+
 	initialize: ->
 		@_params = {}
 		super()
@@ -91,6 +93,18 @@ class Model extends Backbone.Model
 			return @rootUrl
 		else
 			return @rootUrl + @id
+
+	canUpdate: ->
+		return true
+
+	canDelete: ->
+		return true
+
+	canCreate: ->
+		return true
+
+	canRead: ->
+		return true
 
 class Router extends Backbone.Router
 
@@ -248,7 +262,7 @@ class ModelView extends TemplateView
 	setAttributes: ->
 		if @model
 			attr = @attributes()
-			attr["class"] = @className()
+			attr["class"] = if _.isFunction(@className) then @className() else @className
 			@$el.attr(attr)
 			@$el.data("modelId", @model.id)
 			@$el.data("modelCid", @model.cid)
@@ -269,7 +283,6 @@ class ModelView extends TemplateView
 			{
 				collection: @model
 				models: @model?.models
-				attrs: @model?.toJSON() ? {}
 			})
 		context
 
@@ -283,6 +296,7 @@ class ModelView extends TemplateView
 		if model and model instanceof Model
 			model.bind("change", @render, @)
 		else if model instanceof Collection
+			model.bind("change", @render, @)
 			model.bind("add", @render, @)
 			model.bind("reset", @render, @)
 			model.bind("remove", @render, @)
@@ -291,6 +305,7 @@ class ModelView extends TemplateView
 		if model and model instanceof Backbone.Model
 			model.unbind("change", @render)
 		else if model instanceof Backbone.Collection
+			model.bind("change", @render)
 			model.unbind("add", @render)
 			model.unbind("reset", @render)
 			model.unbind("remove", @render)
@@ -458,7 +473,7 @@ class FilteredCollectionView extends CollectionView
 
 	setFilter: (filter) ->
 		@filter = filter
-		@setup()
+		@setupAndRender()
 
 	getModels: ->
 		return @collection.filter(@filter)
@@ -495,6 +510,7 @@ class AppController
 		@modules = {}
 		@modulesContainerElement = $("#app-main")
 		@modulesNavigationElement = $("#app-nav")
+		@startPath = "#/"
 
 		# Register all modules that have attached themselves to the Module object
 		for moduleName, Module of Foundation.Modules
@@ -504,9 +520,12 @@ class AppController
 		if Backbone.history
 			Backbone.history.start()
 
+		# Set the location to the main module
+		window.location.hash = @startPath
+
 	showModule: (module) ->
 		if _.isString(module)
-			module = @modules[moduleName]
+			module = @modules[module]
 		for aModuleName, aModule of @modules
 			if aModule == module
 				$(aModule.mainView.el).show()
@@ -522,7 +541,9 @@ class AppController
 			$(module.mainView.el).appendTo(@modulesContainerElement)
 		if module.label
 			# If the module provides a label, display it in the main Navigation
-			@modulesNavigationElement.append("<li><a href='#/#{module.name}'>#{module.label}</a></li>")
+			@modulesNavigationElement.append("<li><a href='##{module.path}'>#{module.label}</a></li>")
+		if module.start
+			@startPath = module.path
 
 	deRegisterModule: (moduleName) ->
 		modules[moduleName] = null

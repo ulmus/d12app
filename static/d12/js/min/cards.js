@@ -1,5 +1,5 @@
 (function() {
-  var AllCardsView, Card, CardCollection, CardController, CardInDeck, CardInDeckCollection, CardInDeckView, CardModuleMainView, CardRouter, CardSheetView, CardView, Deck, DeckCollection, DeckCollectionView, Foundation, NavView, SearchBoxView, UI, baseUrl, module,
+  var AllCardsView, Card, CardCollection, CardController, CardInDeck, CardInDeckCollection, CardInDeckView, CardModuleMainView, CardRouter, CardSheetView, CardView, Deck, DeckCollection, Foundation, NavView, SearchBoxView, UI, baseUrl, module,
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
@@ -78,7 +78,8 @@
     };
 
     Card.prototype.schema = function() {
-      return {
+      var schema;
+      schema = {
         title: {
           type: "Text",
           title: "Title"
@@ -126,12 +127,23 @@
         refresh: {
           type: "Number",
           title: "Refresh"
-        },
-        protected: {
-          type: "Checkbox",
-          title: "Protected"
         }
       };
+      if (currentUserIsAdmin) {
+        schema["protected"] = {
+          type: "Checkbox",
+          title: "Protected"
+        };
+      }
+      return schema;
+    };
+
+    Card.prototype.canUpdate = function() {
+      return currentUserIsAdmin || !this.get("protected");
+    };
+
+    Card.prototype.canDelete = function() {
+      return currentUserIsAdmin || !this.get("protected");
     };
 
     Card.prototype.toString = function() {
@@ -192,6 +204,18 @@
 
     Deck.prototype.toString = function() {
       return this.get("title");
+    };
+
+    Deck.prototype.mine = function() {
+      return this.get("user") === currentUserId;
+    };
+
+    Deck.prototype.canDelete = function() {
+      return this.mine() || currentUserIsAdmin;
+    };
+
+    Deck.prototype.canUpdate = function() {
+      return this.mine() || currentUserIsAdmin;
     };
 
     return Deck;
@@ -271,7 +295,7 @@
     }
 
     CardView.prototype.className = function() {
-      return CardView.__super__.className.call(this) + " card";
+      return CardView.__super__.className.call(this) + " card clickable";
     };
 
     CardView.template = Handlebars.compile('\
@@ -298,20 +322,22 @@
 
     CardView.modelName = "card";
 
-    CardView.prototype.showEditOnNew = true;
-
     CardView.prototype.events = function() {
       var events;
       events = CardView.__super__.events.call(this);
       _.extend(events, {
-        "click": "showEdit"
+        "click": "editCard"
       });
       return events;
     };
 
+    CardView.prototype.editCard = function() {
+      return UI.editModel(this.model);
+    };
+
     return CardView;
 
-  })(UI.EditableModelView);
+  })(Foundation.ModelView);
 
   CardInDeckView = (function(_super) {
 
@@ -321,7 +347,9 @@
       CardInDeckView.__super__.constructor.apply(this, arguments);
     }
 
-    CardInDeckView.prototype.className = "card";
+    CardInDeckView.prototype.className = function() {
+      return CardInDeckView.__super__.className.call(this) + "card clickable";
+    };
 
     CardInDeckView.template = Handlebars.compile('\
 			<div class="contents {{cardActionClassName card.attributes.type}}">\
@@ -345,6 +373,15 @@
 			</div>\
 	');
 
+    CardInDeckView.prototype.events = function() {
+      var events;
+      events = CardInDeckView.__super__.events.call(this);
+      _.extend(events, {
+        "click": "removeFromDeck"
+      });
+      return events;
+    };
+
     CardInDeckView.prototype.getContext = function() {
       return {
         attr: this.model.toJSON(),
@@ -366,6 +403,10 @@
         }
       });
       return this;
+    };
+
+    CardInDeckView.prototype.removeFromDeck = function() {
+      if (confirm("Remove card from deck?")) return this.model.destroy();
     };
 
     return CardInDeckView;
@@ -433,7 +474,7 @@
 
     return SearchBoxView;
 
-  })(Backbone.View);
+  })(Foundation.View);
 
   CardSheetView = (function(_super) {
 
@@ -443,10 +484,10 @@
       CardSheetView.__super__.constructor.apply(this, arguments);
     }
 
-    CardSheetView.cardDisplayTemplate = Handlebars.compile("{{attr.title}}");
+    CardSheetView.cardDisplayTemplate = Handlebars.compile("{{attr.title}} <small>{{#if attr.description}}{{attr.description}}{{else}}&nbsp;{{/if}}</small>");
 
     CardSheetView.prototype.initialize = function() {
-      this.headerView = new Foundation.ModelView({
+      this.options.headerView = new Foundation.ModelView({
         tagName: "h2",
         className: "noprint",
         template: this.constructor.cardDisplayTemplate,
@@ -456,6 +497,8 @@
     };
 
     CardSheetView.prototype.setDeck = function(deck) {
+      var _this = this;
+      this.deck = deck;
       this.setFilter(function(model) {
         return model.get("deck") === deck.get("id");
       });
@@ -466,63 +509,6 @@
 
   })(Foundation.FilteredCollectionView);
 
-  DeckCollectionView = (function(_super) {
-
-    __extends(DeckCollectionView, _super);
-
-    function DeckCollectionView() {
-      DeckCollectionView.__super__.constructor.apply(this, arguments);
-    }
-
-    DeckCollectionView.prototype.events = {
-      "click .showAllCards": "showAllCards",
-      "click .addNewDeck": "addNewDeck"
-    };
-
-    DeckCollectionView.prototype.initialize = function() {
-      this.modelViewClass = Cards.DeckView;
-      this.headerView = new Foundation.StaticView({
-        className: "btn-toolbar",
-        content: '<div class="btn showAllCards">Show all <span class="number-of-cards"></span> cards</div><div class="btn addNewDeck">Add deck</div>'
-      });
-      DeckCollectionView.__super__.initialize.call(this);
-      app.cards.allCards.bind("reset", this.updateNumberOfCards, this);
-      app.cards.allCards.bind("add", this.updateNumberOfCards, this);
-      return app.cards.allCards.bind("remove", this.updateNumberOfCards, this);
-    };
-
-    DeckCollectionView.prototype.render = function() {
-      DeckCollectionView.__super__.render.call(this);
-      this.updateNumberOfCards();
-      return this;
-    };
-
-    DeckCollectionView.prototype.showAllCards = function() {
-      return app.cards.navigate("cards/all", true);
-    };
-
-    DeckCollectionView.prototype.addNewDeck = function() {
-      return app.cards.decks.create({
-        user: currentUserId
-      });
-    };
-
-    DeckCollectionView.prototype.updateNumberOfCards = function() {
-      var count;
-      count = app.cards.allCards.length;
-      return this.$(".showAllCards .number-of-cards").text(count);
-    };
-
-    DeckCollectionView.prototype.remove = function() {
-      app.cards.allCards.unbind("reset", this.updateNumberOfCards);
-      app.cards.allCards.unbind("add", this.updateNumberOfCards);
-      return app.cards.allCards.unbind("remove", this.updateNumberOfCards);
-    };
-
-    return DeckCollectionView;
-
-  })(Foundation.CollectionView);
-
   CardRouter = (function(_super) {
 
     __extends(CardRouter, _super);
@@ -532,7 +518,7 @@
     }
 
     CardRouter.prototype.routes = {
-      "/cards/all": "showAllCards",
+      "/cards": "showAllCards",
       "/cards/deck/:deck_id": "showCardSheet"
     };
 
@@ -549,22 +535,15 @@
     };
 
     CardRouter.prototype.showAllCards = function() {
-      app.showModule("cards");
-      module.mainView.showAllCards();
-      this.shownView = this.allCardsView;
-      return this.searchView.clear();
+      app.showModule("Cards");
+      return module.mainView.showAllCards();
     };
 
     CardRouter.prototype.showCardSheet = function(deck_id) {
-      var deck, intId;
-      app.showModule("cards");
+      var intId;
+      app.showModule("Cards");
       intId = parseInt(deck_id);
-      deck = this.decks.get(deck_id);
-      $(this.allCardsView.el).hide();
-      this.cardSheetView.setDeck(deck);
-      $(this.cardSheetView.el).show();
-      this.shownView = this.cardSheetView;
-      return this.searchView.clear();
+      return module.mainView.showDeck(intId);
     };
 
     CardRouter.prototype.showError = function(errorData) {
@@ -585,15 +564,24 @@
       NavView.__super__.constructor.apply(this, arguments);
     }
 
+    NavView.prototype.className = function() {
+      return "nav nav-list";
+    };
+
     NavView.template = Handlebars.compile('\
-		<li><a href="#/cards/all"><i class="book"></i> All Cards</a></li>\
+		<li><a href="#/cards"><i class="icon-book"></i> All Cards</a></li>\
 		<li class="nav-header">Decks</li>\
 		{{#each models}}\
-		<li><a href="#/cards/deck/{{this.id}}"><i class="file"></i>{{this.attributes.title}}</a></li>\
+		<li><a href="#/cards/deck/{{#if this.id}}{{this.id}}{{/if}}"><i class="icon-file"></i>{{this.attributes.title}}{{#if this.mine}} <em>[Your Deck]</em>{{/if}}</a></li>\
 		{{/each}}\
 	');
 
     NavView.prototype.activeRow = 0;
+
+    NavView.prototype.initialize = function() {
+      NavView.__super__.initialize.call(this);
+      return this.model.bind("remove", this.gotoAllCards, this);
+    };
 
     NavView.prototype.render = function() {
       NavView.__super__.render.call(this);
@@ -612,17 +600,24 @@
       for (i = 0, _len = rows.length; i < _len; i++) {
         row = rows[i];
         $row = $(row);
-        if (i === this.activeRow) $row.addClass("active");
-        _results.push({
-          "else": $row.removeClass("active")
-        });
+        if (i === this.activeRow) {
+          _results.push($row.addClass("active"));
+        } else {
+          _results.push($row.removeClass("active"));
+        }
       }
       return _results;
     };
 
+    NavView.prototype.gotoAllCards = function() {
+      return module.router.navigate("/cards", {
+        trigger: true
+      });
+    };
+
     return NavView;
 
-  })(Foundation.TemplateView);
+  })(Foundation.ModelView);
 
   CardModuleMainView = (function(_super) {
 
@@ -638,12 +633,9 @@
 
     CardModuleMainView.prototype.content = '<div class="span2 module-sidebar">\
 			<h3>Cards and decks</h3>\
-			<div class="well">\
-				<ul class="nav list cards-nav-list">\
-				</ul>\
-			</div>\
-			<h3>Functions</h3>\
-			<div class="btn-toolbar well cards-toolbar">\
+			<ul class="nav nav-list side-nav-list">\
+			</ul>\
+			<div class="btn-toolbar side-toolbar well">\
 			</div>\
 \
 		</div>\
@@ -679,13 +671,14 @@
       }
       if (!this.navView) {
         this.navView = new NavView({
-          el: this.$(".cards-nav-list"),
+          el: this.$(".side-nav-list"),
           model: module.decks
         });
       }
       if (!this.toolbarView) {
         this.toolbarView = new UI.ToolbarView({
-          el: this.$(".cards-toolbar"),
+          el: this.$(".side-toolbar"),
+          modelViewClass: UI.ButtonView,
           collection: module.tools
         });
       }
@@ -693,7 +686,24 @@
       this.cardSheetView.render();
       this.navView.render();
       this.toolbarView.render();
-      return this.shownView = this.allCardsView;
+      this.shownView = this.allCardsView;
+      this.addToDeckButtons = new UI.ButtonCollection();
+      this.resetAddToDeckButtons();
+      return module.cards.on("add remove change reset", this.resetAddToDeckButtons, this);
+    };
+
+    CardModuleMainView.prototype.resetAddToDeckButtons = function() {
+      var buttons,
+        _this = this;
+      buttons = module.cards.map(function(card) {
+        return new UI.Button({
+          label: card.get("title"),
+          onClick: function() {
+            return module.addCardInDeck(card, _this.cardSheetView.deck);
+          }
+        });
+      });
+      return this.addToDeckButtons.reset(buttons);
     };
 
     CardModuleMainView.prototype.showAllCards = function() {
@@ -704,11 +714,15 @@
         {
           icon: "plus",
           label: "Add Card",
-          onClick: module.addCard
+          onClick: function() {
+            return module.addCard();
+          }
         }, {
           icon: "plus",
           label: "Add Deck",
-          onClick: module.addDeck
+          onClick: function() {
+            return module.addDeck();
+          }
         }
       ]);
     };
@@ -716,10 +730,30 @@
     CardModuleMainView.prototype.showDeck = function(deckId) {
       var deck;
       deck = module.getDeck(deckId);
-      this.cardSheetView.setDeck(deck);
-      this.navView.setActiveRow(module.decks.indexOf(deck));
-      $(this.cardSheetView.el).show();
-      return $(this.allCardsView.el).hide();
+      if (deck) {
+        this.cardSheetView.setDeck(deck);
+        this.navView.setActiveRow(module.decks.indexOf(deck) + 2);
+        this.cardSheetView.$el.show();
+        this.allCardsView.$el.hide();
+        return module.tools.reset([
+          {
+            icon: "plus",
+            label: "Add to Deck",
+            type: "dropdown",
+            menu: this.addToDeckButtons
+          }, {
+            icon: "pencil",
+            label: "Edit Deck",
+            onClick: function() {
+              return UI.editModel(deck);
+            }
+          }
+        ]);
+      } else {
+        return module.router.navigate("/cards", {
+          trigger: true
+        });
+      }
     };
 
     CardModuleMainView.prototype.remove = function() {
@@ -741,9 +775,11 @@
       CardController.__super__.constructor.apply(this, arguments);
     }
 
-    CardController.prototype.name = "cards";
+    CardController.prototype.path = "/cards";
 
     CardController.prototype.label = "Cards";
+
+    CardController.prototype.start = true;
 
     CardController.prototype.initialize = function() {
       module = this;
@@ -759,19 +795,30 @@
       this.mainView.render();
       this.cards.fetch();
       this.cardsInDecks.fetch();
-      return this.decks.fetch();
+      this.decks.fetch();
+      return this.router = new CardRouter();
     };
 
     CardController.prototype.addCard = function() {
-      return this.cards.add(new Card());
+      var card;
+      card = new Card();
+      UI.editModel(card);
+      return this.cards.add(card);
     };
 
     CardController.prototype.addDeck = function() {
-      return this.decks.add(new Deck());
+      var deck;
+      deck = new Deck({
+        user: currentUserId
+      });
+      UI.editModel(deck);
+      return this.decks.add(deck, {
+        silent: true
+      });
     };
 
     CardController.prototype.addCardInDeck = function(card, deck) {
-      return this.cardsInDeck.create({
+      return this.cardsInDecks.create({
         card: card.id,
         deck: deck.id
       });
@@ -782,7 +829,7 @@
     };
 
     CardController.prototype.getDeck = function(deckId) {
-      return this.deck.get(deckId);
+      return this.decks.get(deckId);
     };
 
     CardController.prototype.getCardInDeck = function(cardInDeckId) {
