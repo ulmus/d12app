@@ -142,7 +142,7 @@
           type: "Checkbox",
           title: "Protected"
         };
-        schema["publish_status"] = {
+        schema["published_status"] = {
           type: "Select",
           title: "Publish Status",
           options: [

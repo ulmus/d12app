@@ -56,7 +56,7 @@ class Card extends Foundation.Model
 			disrupts		: false
 			refresh			: 0
 			keywords		: []
-			published_status: "SGST"
+			published_status  : "SGST"
 		if currentUserIsAdmin
 			defaults["published_status"] = "DRFT"
 		defaults
@@ -96,7 +96,7 @@ class Card extends Foundation.Model
 			schema["protected"] =
 				type: "Checkbox"
 				title: "Protected"
-			schema["publish_status"] =
+			schema["published_status"] =
 				type: "Select"
 				title: "Publish Status"
 				options: [
