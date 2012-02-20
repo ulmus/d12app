@@ -39,6 +39,13 @@ Handlebars.registerHelper("cardCategoryDisplaySymbol", (abbr) ->
 		when "ADVN" then "O"
 )
 
+Handlebars.registerHelper("cardPublishedStatusDisplay", (abbr) ->
+	switch abbr
+		when "SGST" then new Handlebars.SafeString('<div class="stamp">SUGGESTION</div>')
+		when "DRFT" then new Handlebars.SafeString('<div class="stamp">DRAFT</div>')
+		else ""
+)
+
 # The Card Models and Collections
 
 class Card extends Foundation.Model
@@ -198,6 +205,7 @@ class CardView extends Foundation.ModelView
 				{{attr.title}}
 			</h2>
 			{{#if attr.protected }}<div class="noprint lock"><i class="icon-lock"></i></div>{{/if }}
+			{{cardPublishedStatusDisplay attr.published_status}}
 			<div class="cardtext">
 				<div class="body">
 					{{{markdown attr.body}}}
@@ -235,6 +243,7 @@ class CardInDeckView extends Foundation.ModelView
 				<h2 class="title">
 					{{card.attributes.title}}
 				</h2>
+				{{cardPublishedStatusDisplay card.attributes.published_status}}
 				<div class="cardtext">
 					<div class="body">
 						{{{markdown card.attributes.body}}}

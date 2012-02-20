@@ -109,6 +109,19 @@ div.card .contents .title {
   background-image: -webkit-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
   background-image: -ms-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
 }
+div.card .contents .stamp {
+  text-align: center;
+  z-index: 10;
+  opacity: 0.06;
+  font-family: "Droid Sans", sans-serif;
+  font-size: 30pt;
+  font-weight: bold;
+  position: absolute;
+  width: 100%;
+  -webkit-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+  top: 42mm;
+}
 div.card .contents .cardtext {
   font-family: "Droid Serif", serif;
   width: auto;

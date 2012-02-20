@@ -19,7 +19,8 @@ class CardResource(ModelResource):
 		"body",
 		"type",
 		"keywords",
-		"protected"
+		"protected",
+		"published_status",
 	)
 
 

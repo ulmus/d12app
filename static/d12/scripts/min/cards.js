@@ -57,6 +57,17 @@
     }
   });
 
+  Handlebars.registerHelper("cardPublishedStatusDisplay", function(abbr) {
+    switch (abbr) {
+      case "SGST":
+        return new Handlebars.SafeString('<div class="stamp">SUGGESTION</div>');
+      case "DRFT":
+        return new Handlebars.SafeString('<div class="stamp">DRAFT</div>');
+      default:
+        return "";
+    }
+  });
+
   Card = (function(_super) {
 
     __extends(Card, _super);
@@ -328,6 +339,7 @@
 				{{attr.title}}\
 			</h2>\
 			{{#if attr.protected }}<div class="noprint lock"><i class="icon-lock"></i></div>{{/if }}\
+			{{cardPublishedStatusDisplay attr.published_status}}\
 			<div class="cardtext">\
 				<div class="body">\
 					{{{markdown attr.body}}}\
@@ -380,6 +392,7 @@
 				<h2 class="title">\
 					{{card.attributes.title}}\
 				</h2>\
+				{{cardPublishedStatusDisplay card.attributes.published_status}}\
 				<div class="cardtext">\
 					<div class="body">\
 						{{{markdown card.attributes.body}}}\
