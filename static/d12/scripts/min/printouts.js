@@ -1,19 +1,15 @@
 (function() {
-  var baseUrl,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  var Printout, PrintoutCollection, baseUrl,
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
-  window.Printouts = {};
-
   baseUrl = "/api/export/";
 
-  Printouts.Printout = (function(_super) {
+  Printout = (function(_super) {
 
     __extends(Printout, _super);
 
     function Printout() {
-      this.toString = __bind(this.toString, this);
       Printout.__super__.constructor.apply(this, arguments);
     }
 
@@ -34,11 +30,19 @@
       return this.get("title");
     };
 
+    Printout.prototype.getUrl = function() {
+      return "" + baseUrl + "pdf/" + (this.get('uuid')) + "/";
+    };
+
+    Printout.prototype.openWindow = function() {
+      return window.open(this.getUrl(), "_new");
+    };
+
     return Printout;
 
   })(Foundation.Model);
 
-  Printouts.PrintoutCollection = (function(_super) {
+  PrintoutCollection = (function(_super) {
 
     __extends(PrintoutCollection, _super);
 
@@ -46,10 +50,24 @@
       PrintoutCollection.__super__.constructor.apply(this, arguments);
     }
 
-    PrintoutCollection.prototype.model = Printouts.Printout;
+    PrintoutCollection.prototype.model = Printout;
+
+    PrintoutCollection.prototype.createAndShow = function(attributes) {
+      return this.create(attributes, {
+        success: function(model, response) {
+          return model.openWindow();
+        }
+      });
+    };
 
     return PrintoutCollection;
 
   })(Foundation.Collection);
+
+  window.Printouts = {
+    Printout: Printout,
+    PrintoutCollection: PrintoutCollection,
+    printouts: new PrintoutCollection()
+  };
 
 }).call(this);

@@ -123,9 +123,9 @@ div.edit input[type="checkbox"], div.edit input[type="radio"] {
 
 div.contents .lock {
 	position: absolute;
-	right: 5mm;
-	top: 3mm;
-	font-size: 10px;
+	right: 11mm;
+	top: 7mm;
+	opacity: 0.5;
 }
 
 div.card.editable:hover .contents {

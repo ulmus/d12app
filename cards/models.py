@@ -15,6 +15,13 @@ CARD_TYPE_CHOICES = (
 	("REAC", "Reaction"),
 )
 
+CARD_PUBLISH_STATUS_CHOICES = (
+	("SGST", "Suggestion"),
+	("DRFT", "Draft"),
+	("PUBL", "Published"),
+)
+
+
 class Card(models.Model):
 	title = models.CharField(max_length=80, blank=True, null=True)
 	category = models.CharField(max_length=4, choices=CARD_CATEGORY_CHOICES, default="BASC")
@@ -24,6 +31,7 @@ class Card(models.Model):
 	protected = models.BooleanField(default=False, blank=True)
 	disrupts = models.BooleanField(default=False, blank=True)
 	refresh = models.PositiveSmallIntegerField(default=0, blank=True)
+	published_status = models.CharField(max_length=4, choices=CARD_PUBLISH_STATUS_CHOICES, default="DRFT")
 
 	class Meta:
 		ordering = ("title",)

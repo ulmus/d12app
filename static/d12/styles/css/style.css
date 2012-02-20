@@ -1,0 +1,221 @@
+/*@import url(http://fonts.googleapis.com/css?family=Expletus+Sans:400,700,400italic,700italic);*/
+body {
+  padding-top: 60px;
+}
+.messages {
+  height: 50px;
+}
+.clickable {
+  cursor: pointer;
+}
+.websymbol {
+  font-family: 'WebSymbolsRegular' sans-serif;
+}
+.relative {
+  position: relative;
+}
+.fixed {
+  position: fixed;
+}
+.clickable {
+  cursor: pointer;
+}
+div.card-sheet {
+  position: relative;
+}
+div.card {
+  font-size: 12pt;
+  height: 88mm;
+  width: 63mm;
+  position: relative;
+  float: left;
+  page-break-inside: avoid;
+  font-family: "Droid Serif", serif;
+  margin: 2mm;
+  text-align: center;
+}
+div.card .contents {
+  border-radius: 3mm;
+  border: 0.75mm solid black;
+  box-shadow: 2px 2px 5px #333;
+  background-color: white;
+  height: auto;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+div.card .contents.primary {
+  background-color: #c70404;
+  background-image: linear-gradient(bottom, #750000 9%, #c70404 41%);
+  background-image: -o-linear-gradient(bottom, #750000 9%, #c70404 41%);
+  background-image: -moz-linear-gradient(bottom, #750000 9%, #c70404 41%);
+  background-image: -webkit-linear-gradient(bottom, #750000 9%, #c70404 41%);
+  background-image: -ms-linear-gradient(bottom, #750000 9%, #c70404 41%);
+}
+div.card .contents.movement {
+  background-color: #086ec7;
+  background-image: linear-gradient(bottom, #003473 9%, #086ec7 41%);
+  background-image: -o-linear-gradient(bottom, #003473 9%, #086ec7 41%);
+  background-image: -moz-linear-gradient(bottom, #003473 9%, #086ec7 41%);
+  background-image: -webkit-linear-gradient(bottom, #003473 9%, #086ec7 41%);
+  background-image: -ms-linear-gradient(bottom, #003473 9%, #086ec7 41%);
+}
+div.card .contents.support {
+  background-color: #06c706;
+  background-image: linear-gradient(bottom, #067300 9%, #06c706 41%);
+  background-image: -o-linear-gradient(bottom, #067300 9%, #06c706 41%);
+  background-image: -moz-linear-gradient(bottom, #067300 9%, #06c706 41%);
+  background-image: -webkit-linear-gradient(bottom, #067300 9%, #06c706 41%);
+  background-image: -ms-linear-gradient(bottom, #067300 9%, #06c706 41%);
+}
+div.card .contents.reaction {
+  background-color: #c7c70a;
+  background-image: linear-gradient(bottom, #737300 9%, #c7c70a 41%);
+  background-image: -o-linear-gradient(bottom, #737300 9%, #c7c70a 41%);
+  background-image: -moz-linear-gradient(bottom, #737300 9%, #c7c70a 41%);
+  background-image: -webkit-linear-gradient(bottom, #737300 9%, #c7c70a 41%);
+  background-image: -ms-linear-gradient(bottom, #737300 9%, #c7c70a 41%);
+}
+div.card .contents .lock {
+  position: absolute;
+  right: 8mm;
+  top: 3.5mm;
+  z-index: 2;
+  opacity: 0.5;
+}
+div.card .contents .title {
+  font-family: "Droid Sans", sans-serif;
+  font-weight: bold;
+  position: absolute;
+  z-index: 1;
+  top: 1mm;
+  left: 4.5mm;
+  width: 52mm;
+  height: 8mm;
+  display: block;
+  padding: 0mm;
+  margin: 0 auto 0 auto;
+  border-radius: 3mm;
+  border: 0.75mm solid black;
+  background-color: whitesmoke;
+  text-align: center;
+  font-size: 4mm;
+  line-height: 8.5mm;
+  background-image: linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -o-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -moz-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -webkit-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -ms-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+}
+div.card .contents .cardtext {
+  font-family: "Droid Serif", serif;
+  width: auto;
+  border-radius: 3mm;
+  border: 0.75mm solid black;
+  background-color: white;
+  font-size: 9px;
+  height: auto;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 5mm 1mm 2mm 1mm;
+  text-align: left;
+}
+div.card .contents .cardtext .body {
+  margin: 8mm 2mm 4mm;
+}
+div.card .contents p {
+  font-size: 11px;
+  line-height: 13px;
+  margin-bottom: 7px;
+}
+div.card .contents .category {
+  font-style: italic;
+  font-weight: bold;
+  height: 8mm;
+}
+div.card .contents ul.icons {
+  bottom: -2mm;
+  position: absolute;
+  list-style: none;
+  margin: 1mm;
+  padding: 1mm;
+}
+div.card .contents ul.icons.left {
+  float: left;
+  left: 1mm;
+}
+div.card .contents ul.icons.right {
+  right: 1mm;
+  float: right;
+}
+div.card .contents ul.icons li {
+  width: 6mm;
+  height: 6mm;
+  text-align: center;
+  line-height: 6.5mm;
+  border-radius: 2.2mm;
+  border: 0.5mm solid black;
+  margin: 1mm;
+  background-color: white;
+  font-size: 12px;
+  font-family: "Droid Sans", sans-serif;
+  color: #333;
+}
+div.card .contents ul.icons li.action-type {
+  width: auto;
+  font-size: 10pt;
+  font-weight: normal;
+  padding-left: 1.5mm;
+  padding-right: 1.5mm;
+  min-width: 15mm;
+  text-align: center;
+  background-image: linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -o-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -moz-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -webkit-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+  background-image: -ms-linear-gradient(bottom, #d4d2d4 7%, #f2f2f2 70%);
+}
+.ui-draggable-dragging {
+  z-index: 2000;
+  opacity: 0.6;
+  -webkit-transform: scale(0.5) rotate(5deg);
+  -moz-transform: scale(0.5) rotate(5deg);
+  -ms-transform: scale(0.5) rotate(5deg);
+  transform: scale(0.5) rotate(5deg);
+}
+div.card textarea {
+  height: 25mm;
+}
+div.sidebar {
+  width: 88px;
+}
+.side-toolbar .btn {
+  text-align: left;
+}
+.side-toolbar > div {
+  margin-bottom: 5px;
+}
+.login {
+  margin-top: 80px;
+}
+/* Additions to the bootstrap */
+.fluid-sidebar .btn-toolbar .btn {
+  width: 145px;
+  margin: 5px;
+}
+.fluid-sidebar .btn-toolbar input {
+  width: 135px;
+  margin: 5px 5px 10px 5px;
+  line-height: 13px;
+}
+.btn-left {
+  float: left !important;
+}
+.modal {
+  max-height: 750px;
+}

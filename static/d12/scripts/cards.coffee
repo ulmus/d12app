@@ -7,6 +7,7 @@ module = null
 
 Foundation = window.Foundation
 UI = Foundation.UI
+Printouts = window.Printouts
 
 # Template Helpers
 
@@ -46,14 +47,19 @@ class Card extends Foundation.Model
 
 	rootUrl: baseUrl + "card/"
 	
-	defaults:
-		category		: "BASC"
-		title			: ""
-		type			: "ACTN"
-		body			: ""
-		disrupts		: false
-		refresh			: 0
-		keywords		: []
+	defaults: ->
+		defaults =
+			category		: "BASC"
+			title			: ""
+			type			: "ACTN"
+			body			: ""
+			disrupts		: false
+			refresh			: 0
+			keywords		: []
+			published_status: "SGST"
+		if currentUserIsAdmin
+			defaults["published_status"] = "DRFT"
+		defaults
 		
 	schema: ->
 		schema =
@@ -90,6 +96,14 @@ class Card extends Foundation.Model
 			schema["protected"] =
 				type: "Checkbox"
 				title: "Protected"
+			schema["publish_status"] =
+				type: "Select"
+				title: "Publish Status"
+				options: [
+					{val: "SGST", label: "Suggestion"},
+					{val: "DRFT", label: "Draft"},
+					{val: "PUBL", label: "Published"},
+				]
 		schema
 
 	canUpdate: ->
@@ -183,7 +197,7 @@ class CardView extends Foundation.ModelView
 			<h2 class="title">
 				{{attr.title}}
 			</h2>
-			{{#if attr.protected }}<div class="noprint lock websymbol">x</div>{{/if }}
+			{{#if attr.protected }}<div class="noprint lock"><i class="icon-lock"></i></div>{{/if }}
 			<div class="cardtext">
 				<div class="body">
 					{{{markdown attr.body}}}
@@ -222,9 +236,6 @@ class CardInDeckView extends Foundation.ModelView
 					{{card.attributes.title}}
 				</h2>
 				<div class="cardtext">
-					<div class="category">
-							{{cardCategoryDisplay attr.category}}
-					</div>
 					<div class="body">
 						{{{markdown card.attributes.body}}}
 					</div>
@@ -253,6 +264,7 @@ class CardInDeckView extends Foundation.ModelView
 
 	render: ->
 		super()
+		###
 		$(@el).draggable(
 			appendTo: "body"
 			helper: "clone"
@@ -261,6 +273,7 @@ class CardInDeckView extends Foundation.ModelView
 				left: 120
 				top: 170
 		)
+        ###
 		@
 
 	removeFromDeck: ->
@@ -418,7 +431,7 @@ class CardModuleMainView extends Foundation.ModuleMainView
 				headerView: new Foundation.StaticView(
 					tagName: "h2"
 					className: "noprint"
-					content: "All Cards"
+					content: "All Cards <small>All the cards in the database</small>"
 				)
 				prependNew: true
 				el: @$(".allCardsView")
@@ -477,12 +490,18 @@ class CardModuleMainView extends Foundation.ModuleMainView
 				label: "Add Card"
 				onClick: ->
 					module.addCard()
-			},
+			}
 			{
 				icon: "plus"
 				label: "Add Deck"
 				onClick: ->
 					module.addDeck()
+			}
+			{
+				icon: "print"
+				label: "Print Cards"
+				onClick: =>
+					@printAllCards()
 			}
 		])
 
@@ -506,9 +525,26 @@ class CardModuleMainView extends Foundation.ModuleMainView
 					onClick: ->
 						UI.editModel(deck)
 				}
+				{
+					icon: "print"
+					label: "Print Cards"
+					onClick: =>
+						@printDeck()
+				}
 			])
 		else
 			module.router.navigate("/cards",{trigger:true})
+
+
+	printDeck: ->
+		Printouts.printouts.createAndShow({
+			body: @cardSheetView.$el.html()
+		})
+
+	printAllCards: ->
+		Printouts.printouts.createAndShow({
+			body: @allCardsView.$el.html()
+		})
 
 	remove: ->
 		@allCardsView.remove()

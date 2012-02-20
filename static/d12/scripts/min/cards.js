@@ -1,5 +1,5 @@
 (function() {
-  var AllCardsView, Card, CardCollection, CardController, CardInDeck, CardInDeckCollection, CardInDeckView, CardModuleMainView, CardRouter, CardSheetView, CardView, Deck, DeckCollection, Foundation, NavView, SearchBoxView, UI, baseUrl, module,
+  var AllCardsView, Card, CardCollection, CardController, CardInDeck, CardInDeckCollection, CardInDeckView, CardModuleMainView, CardRouter, CardSheetView, CardView, Deck, DeckCollection, Foundation, NavView, Printouts, SearchBoxView, UI, baseUrl, module,
     __hasProp = Object.prototype.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
@@ -10,6 +10,8 @@
   Foundation = window.Foundation;
 
   UI = Foundation.UI;
+
+  Printouts = window.Printouts;
 
   Handlebars.registerHelper("cardActionDisplay", function(abbr) {
     switch (abbr) {
@@ -67,14 +69,20 @@
 
     Card.prototype.rootUrl = baseUrl + "card/";
 
-    Card.prototype.defaults = {
-      category: "BASC",
-      title: "",
-      type: "ACTN",
-      body: "",
-      disrupts: false,
-      refresh: 0,
-      keywords: []
+    Card.prototype.defaults = function() {
+      var defaults;
+      defaults = {
+        category: "BASC",
+        title: "",
+        type: "ACTN",
+        body: "",
+        disrupts: false,
+        refresh: 0,
+        keywords: [],
+        published_status: "SGST"
+      };
+      if (currentUserIsAdmin) defaults["published_status"] = "DRFT";
+      return defaults;
     };
 
     Card.prototype.schema = function() {
@@ -133,6 +141,22 @@
         schema["protected"] = {
           type: "Checkbox",
           title: "Protected"
+        };
+        schema["publish_status"] = {
+          type: "Select",
+          title: "Publish Status",
+          options: [
+            {
+              val: "SGST",
+              label: "Suggestion"
+            }, {
+              val: "DRFT",
+              label: "Draft"
+            }, {
+              val: "PUBL",
+              label: "Published"
+            }
+          ]
         };
       }
       return schema;
@@ -303,7 +327,7 @@
 			<h2 class="title">\
 				{{attr.title}}\
 			</h2>\
-			{{#if attr.protected }}<div class="noprint lock websymbol">x</div>{{/if }}\
+			{{#if attr.protected }}<div class="noprint lock"><i class="icon-lock"></i></div>{{/if }}\
 			<div class="cardtext">\
 				<div class="body">\
 					{{{markdown attr.body}}}\
@@ -357,9 +381,6 @@
 					{{card.attributes.title}}\
 				</h2>\
 				<div class="cardtext">\
-					<div class="category">\
-							{{cardCategoryDisplay attr.category}}\
-					</div>\
 					<div class="body">\
 						{{{markdown card.attributes.body}}}\
 					</div>\
@@ -393,15 +414,16 @@
 
     CardInDeckView.prototype.render = function() {
       CardInDeckView.__super__.render.call(this);
-      $(this.el).draggable({
-        appendTo: "body",
-        helper: "clone",
-        delay: 50,
-        cursorAt: {
-          left: 120,
-          top: 170
-        }
-      });
+      /*
+      		$(@el).draggable(
+      			appendTo: "body"
+      			helper: "clone"
+      			delay: 50
+      			cursorAt:
+      				left: 120
+      				top: 170
+      		)
+      */
       return this;
     };
 
@@ -651,7 +673,7 @@
           headerView: new Foundation.StaticView({
             tagName: "h2",
             className: "noprint",
-            content: "All Cards"
+            content: "All Cards <small>All the cards in the database</small>"
           }),
           prependNew: true,
           el: this.$(".allCardsView"),
@@ -707,6 +729,7 @@
     };
 
     CardModuleMainView.prototype.showAllCards = function() {
+      var _this = this;
       $(this.cardSheetView.el).hide();
       $(this.allCardsView.el).show();
       this.navView.setActiveRow(0);
@@ -723,12 +746,19 @@
           onClick: function() {
             return module.addDeck();
           }
+        }, {
+          icon: "print",
+          label: "Print Cards",
+          onClick: function() {
+            return _this.printAllCards();
+          }
         }
       ]);
     };
 
     CardModuleMainView.prototype.showDeck = function(deckId) {
-      var deck;
+      var deck,
+        _this = this;
       deck = module.getDeck(deckId);
       if (deck) {
         this.cardSheetView.setDeck(deck);
@@ -747,6 +777,12 @@
             onClick: function() {
               return UI.editModel(deck);
             }
+          }, {
+            icon: "print",
+            label: "Print Cards",
+            onClick: function() {
+              return _this.printDeck();
+            }
           }
         ]);
       } else {
@@ -754,6 +790,18 @@
           trigger: true
         });
       }
+    };
+
+    CardModuleMainView.prototype.printDeck = function() {
+      return Printouts.printouts.createAndShow({
+        body: this.cardSheetView.$el.html()
+      });
+    };
+
+    CardModuleMainView.prototype.printAllCards = function() {
+      return Printouts.printouts.createAndShow({
+        body: this.allCardsView.$el.html()
+      });
     };
 
     CardModuleMainView.prototype.remove = function() {
