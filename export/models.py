@@ -71,11 +71,11 @@ class Printout(models.Model):
 			},
 			{
 				"arg": "--margin-top",
-				"val": "11.5"
+				"val": "11.3"
 			},
 			{
 				"arg": "--margin-bottom",
-				"val": "11.5"
+				"val": "11.3"
 			},
 		]
 
